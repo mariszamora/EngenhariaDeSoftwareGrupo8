@@ -13,9 +13,9 @@ def realizar_login(email: str, senha: str) -> dict:
         Senior(
             id=1,
             senha="123",
-            nome_completo="Roberto Silva",
+            nome_completo="Antonio Silva",
             telefone="5599692735",
-            email="roberto@email.com",
+            email="antonio@email.com",
             tamanho_fonte=16,
             alto_contraste=True,
             contato_emergencia="Filha Maria - (55) 9999-9999",
@@ -39,4 +39,4 @@ def realizar_login(email: str, senha: str) -> dict:
             return {"sucesso": True, "usuario": usuario}
 
     # Se terminar o loop e não achar ninguém:
-    return {"sucesso": False, "erro": "E-mail ou senha incorretos."}
+    return {"não autenticado": False, "erro": "E-mail ou senha incorretos."}
