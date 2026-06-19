@@ -12,3 +12,5 @@ Diagrama de pacotes (Mari): https://lucid.app/lucidchart/127fd91c-f12a-4f95-a051
 Diagrama de atividade (Rafa): https://www.canva.com/design/DAHKf8wT2QA/sbOP5hMWnH5CIcWJGqdNkw/edit?ui=eyJFIjp7IkE_IjoiQSIsIkEiOiJGbG93Y2hhcnQifX0 <br><br>
 
 Slides para 26/05: https://docs.google.com/presentation/d/1L-k11o0FD6D_1dr2cPxJ7H2DnquYjreIfW3UPEpHUJ4/edit?slide=id.g3e48edf3e7b_0_0#slide=id.g3e48edf3e7b_0_0 <br><br>
+
+Link Figma: https://www.figma.com/design/Xab7PC98loQy6BCkOFBS5I/Engenharia-de-Software?node-id=0-1&t=fsVeOQh59TmlcQ8r-0
