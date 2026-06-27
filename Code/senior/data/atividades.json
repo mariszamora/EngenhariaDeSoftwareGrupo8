@@ -1,0 +1,41 @@
+{
+  "proximo_id": 4,
+  "atividades": [
+    {
+      "id": 1,
+      "titulo": "Roda de Conversa",
+      "descricao": "Conversa entre os participantes.",
+      "data": "01/06",
+      "horario": "13:30",
+      "local": "Sala Virtual",
+      "vagas": 30,
+      "tipo": "Remota",
+      "inscritos": [],
+      "link": "https://meet.google.com/"
+    },
+    {
+      "id": 2,
+      "titulo": "Pilates",
+      "descricao": "Pilates para terceira idade.",
+      "data": "04/06",
+      "horario": "13:30",
+      "local": "Parque Central",
+      "vagas": 20,
+      "tipo": "Presencial",
+      "inscritos": [],
+      "endereco": "Parque Central"
+    },
+    {
+      "id": 3,
+      "titulo": "Yoga",
+      "descricao": "Alongamento e relaxamento.",
+      "data": "08/06",
+      "horario": "08:00",
+      "local": "Google Meet",
+      "vagas": 40,
+      "tipo": "Remota",
+      "inscritos": [],
+      "link": "https://meet.google.com/"
+    }
+  ]
+}
