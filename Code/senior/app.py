@@ -1,7 +1,7 @@
 # app.py - COM BOTÕES DE PERFIL NA SIDEBAR
 import streamlit as st
-import pages.calendario as calendario
-import pages.pageatividades as atividades
+import telas.calendario as calendario
+import telas.pageatividades as atividades
 from models.usuario import Senior, Tutor
 from services.atividade_service import (
     get_usuario_atual, set_usuario_atual, get_all_usuarios,
