@@ -5,8 +5,11 @@ import os
 from models.atividade import AtividadePresencial, AtividadeRemota
 from models.usuario import Senior, Tutor
 
-ARQUIVO_ATIVIDADES = "data/atividades.json"
-ARQUIVO_USUARIOS = "data/usuarios.json"
+PASTA_DADOS = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"
+)
+ARQUIVO_ATIVIDADES = os.path.join(PASTA_DADOS, "atividades.json")
+ARQUIVO_USUARIOS = os.path.join(PASTA_DADOS, "usuarios.json")
 
 # ==========================================
 # CARREGAR E SALVAR DADOS
@@ -14,7 +17,7 @@ ARQUIVO_USUARIOS = "data/usuarios.json"
 
 def carregar_todos_dados():
     """Carrega atividades e usuarios do JSON"""
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(PASTA_DADOS, exist_ok=True)
     
     # Carrega atividades
     if "atividades" not in st.session_state:
@@ -87,9 +90,6 @@ def carregar_todos_dados():
                             especialidade=item["especialidade"]
                         )
                     st.session_state.usuarios.append(usuario)
-                
-                if st.session_state.usuarios:
-                    st.session_state.usuario_atual = st.session_state.usuarios[0]
         else:
             _criar_usuarios_padrao()
 
@@ -155,7 +155,6 @@ def _criar_usuarios_padrao():
             especialidade="Educacao Fisica"
         )
     ]
-    st.session_state.usuario_atual = st.session_state.usuarios[0]
     _salvar_usuarios()
 
 def _salvar_atividades():
@@ -181,7 +180,7 @@ def _salvar_atividades():
             item["endereco"] = atividade.endereco
         dados["atividades"].append(item)
     
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(PASTA_DADOS, exist_ok=True)
     with open(ARQUIVO_ATIVIDADES, 'w', encoding='utf-8') as f:
         json.dump(dados, f, ensure_ascii=False, indent=2)
 
@@ -205,7 +204,7 @@ def _salvar_usuarios():
             item["especialidade"] = usuario.especialidade
         dados.append(item)
     
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(PASTA_DADOS, exist_ok=True)
     with open(ARQUIVO_USUARIOS, 'w', encoding='utf-8') as f:
         json.dump(dados, f, ensure_ascii=False, indent=2)
 
