@@ -1,4 +1,4 @@
-# services/atividade_service.py - COMPLETA (COM TUDO)
+# services/atividade_service.py - CORRIGIDO (FORÇA ATUALIZAÇÃO)
 import streamlit as st
 import json
 import os
@@ -12,11 +12,11 @@ ARQUIVO_ATIVIDADES = os.path.join(PASTA_DADOS, "atividades.json")
 ARQUIVO_USUARIOS = os.path.join(PASTA_DADOS, "usuarios.json")
 
 # ==========================================
-# CARREGAR E SALVAR DADOS
+# CARREGAR DADOS
 # ==========================================
 
 def carregar_todos_dados():
-    """Carrega atividades e usuarios do JSON"""
+    """Carrega atividades e usuarios do JSON para o session_state"""
     os.makedirs(PASTA_DADOS, exist_ok=True)
     
     # Carrega atividades
@@ -26,7 +26,6 @@ def carregar_todos_dados():
                 dados = json.load(f)
                 st.session_state.atividades = []
                 st.session_state.proximo_id = dados.get("proximo_id", 1)
-                
                 for item in dados.get("atividades", []):
                     if item["tipo"] == "Remota":
                         atividade = AtividadeRemota(
@@ -74,7 +73,6 @@ def carregar_todos_dados():
                             senha=item["senha"],
                             contato_emergencia=item["contato_emergencia"]
                         )
-                        # Recupera atividades inscritas
                         usuario.atividades_inscritas = []
                         for ativ_id in item.get("atividades_inscritas", []):
                             ativ = buscar_atividade_por_id(ativ_id)
@@ -91,78 +89,88 @@ def carregar_todos_dados():
                         )
                     st.session_state.usuarios.append(usuario)
         else:
-            _criar_usuarios_padrao()
+            st.session_state.usuarios = [
+                Senior(
+                    id=1,
+                    nome="Antonio Silva",
+                    email="antonio@email.com",
+                    telefone="(11) 99999-9999",
+                    senha="123",
+                    contato_emergencia="Maria - (11) 98888-8888"
+                ),
+                Tutor(
+                    id=2,
+                    nome="Carlos Souza",
+                    email="carlos@email.com",
+                    telefone="(11) 98888-7777",
+                    senha="321",
+                    especialidade="Educacao Fisica"
+                )
+            ]
 
 def _criar_atividades_padrao():
     """Cria atividades padrao"""
-    adicionar_atividade(
-        AtividadeRemota(
-            id=0,
-            titulo="Roda de Conversa",
-            descricao="Conversa entre os participantes.",
-            data="01/06",
-            horario="13:30",
-            tutor=None,
-            local="Sala Virtual",
-            vagas=30,
-            link="https://meet.google.com/"
-        )
+    ativ1 = AtividadeRemota(
+        id=0,
+        titulo="Roda de Conversa",
+        descricao="Conversa entre os participantes.",
+        data="01/06",
+        horario="13:30",
+        tutor=None,
+        local="Sala Virtual",
+        vagas=30,
+        link="https://meet.google.com/"
     )
-    adicionar_atividade(
-        AtividadePresencial(
-            id=0,
-            titulo="Pilates",
-            descricao="Pilates para terceira idade.",
-            data="04/06",
-            horario="13:30",
-            tutor=None,
-            local="Parque Central",
-            vagas=20,
-            endereco="Parque Central"
-        )
+    ativ1.id = 1
+    st.session_state.atividades.append(ativ1)
+    st.session_state.proximo_id = 2
+    
+    ativ2 = AtividadePresencial(
+        id=0,
+        titulo="Pilates",
+        descricao="Pilates para terceira idade.",
+        data="04/06",
+        horario="13:30",
+        tutor=None,
+        local="Parque Central",
+        vagas=20,
+        endereco="Parque Central"
     )
-    adicionar_atividade(
-        AtividadeRemota(
-            id=0,
-            titulo="Yoga",
-            descricao="Alongamento e relaxamento.",
-            data="08/06",
-            horario="08:00",
-            tutor=None,
-            local="Google Meet",
-            vagas=40,
-            link="https://meet.google.com/"
-        )
+    ativ2.id = 2
+    st.session_state.atividades.append(ativ2)
+    st.session_state.proximo_id = 3
+    
+    ativ3 = AtividadeRemota(
+        id=0,
+        titulo="Yoga",
+        descricao="Alongamento e relaxamento.",
+        data="08/06",
+        horario="08:00",
+        tutor=None,
+        local="Google Meet",
+        vagas=40,
+        link="https://meet.google.com/"
     )
+    ativ3.id = 3
+    st.session_state.atividades.append(ativ3)
+    st.session_state.proximo_id = 4
+    
+    _salvar_atividades()
 
-def _criar_usuarios_padrao():
-    """Cria usuarios padrao"""
-    st.session_state.usuarios = [
-        Senior(
-            id=1,
-            nome="Antonio Silva",
-            email="antonio@email.com",
-            telefone="(11) 99999-9999",
-            senha="123",
-            contato_emergencia="Maria - (11) 98888-8888"
-        ),
-        Tutor(
-            id=2,
-            nome="Carlos Souza",
-            email="carlos@email.com",
-            telefone="(11) 98888-7777",
-            senha="321",
-            especialidade="Educacao Fisica"
-        )
-    ]
-    _salvar_usuarios()
+# ==========================================
+# SALVAR DADOS
+# ==========================================
 
 def _salvar_atividades():
     """Salva atividades no JSON"""
+    if "atividades" not in st.session_state:
+        return
+    
     dados = {
         "proximo_id": st.session_state.proximo_id,
         "atividades": []
     }
+
     for atividade in st.session_state.atividades:
         item = {
             "id": atividade.id,
@@ -186,6 +194,9 @@ def _salvar_atividades():
 
 def _salvar_usuarios():
     """Salva usuarios no JSON"""
+    if "usuarios" not in st.session_state:
+        return
+    
     dados = []
     for usuario in st.session_state.usuarios:
         item = {
@@ -208,51 +219,7 @@ def _salvar_usuarios():
     with open(ARQUIVO_USUARIOS, 'w', encoding='utf-8') as f:
         json.dump(dados, f, ensure_ascii=False, indent=2)
 
-# ==========================================
-# API PUBLICA - ATIVIDADES
-# ==========================================
 
-def listar_atividades():
-    carregar_todos_dados()
-    return st.session_state.atividades
-
-def buscar_atividade_por_id(id):
-    carregar_todos_dados()
-    for atividade in st.session_state.atividades:
-        if atividade.id == id:
-            return atividade
-    return None
-
-def buscar_atividade_por_data(data):
-    carregar_todos_dados()
-    resultado = []
-    for atividade in st.session_state.atividades:
-        if atividade.data == data:
-            resultado.append(atividade)
-    return resultado
-
-def adicionar_atividade(atividade):
-    carregar_todos_dados()
-    atividade.id = st.session_state.proximo_id
-    st.session_state.proximo_id += 1
-    st.session_state.atividades.append(atividade)
-    _salvar_atividades()
-
-def criar_atividade(atividade):
-    adicionar_atividade(atividade)
-
-def remover_atividade(id):
-    carregar_todos_dados()
-    atividade = buscar_atividade_por_id(id)
-    if atividade:
-        st.session_state.atividades.remove(atividade)
-        _salvar_atividades()
-        return True
-    return False
-
-# ==========================================
-# API PUBLICA - USUARIOS
-# ==========================================
 
 def get_usuario_atual():
     carregar_todos_dados()
@@ -267,32 +234,29 @@ def get_all_usuarios():
     carregar_todos_dados()
     return st.session_state.usuarios
 
-def login(email, senha):
+def listar_atividades():
     carregar_todos_dados()
-    for usuario in st.session_state.usuarios:
-        if usuario.email == email and usuario.senha == senha:
-            st.session_state.usuario_atual = usuario
-            _salvar_usuarios()
-            return usuario
+    return st.session_state.atividades
+
+def buscar_atividade_por_id(id):
+    carregar_todos_dados()
+    for atividade in st.session_state.atividades:
+        if atividade.id == id:
+            return atividade
     return None
 
-def listar_atividades_do_senior(senior_id):
-    """Retorna as atividades que um senior esta inscrito"""
+def criar_atividade(atividade):
     carregar_todos_dados()
-    for u in st.session_state.usuarios:
-        if u.id == senior_id and isinstance(u, Senior):
-            return u.atividades_inscritas
-    return []
+    atividade.id = st.session_state.proximo_id
+    st.session_state.proximo_id += 1
+    st.session_state.atividades.append(atividade)
+    _salvar_atividades()
+    #aqui salva no joson
 
-# ==========================================
-# API PUBLICA - INSCRICOES (LOGICA CENTRAL)
-# ==========================================
 
-def inscrever_senior(senior_id: int, atividade_id: int) -> dict:
-    """
-    Inscreve um senior em uma atividade.
-    Retorna: {'sucesso': bool, 'mensagem': str}
-    """
+
+def inscrever_senior(senior_id, atividade_id):
+    """Inscreve um senior em uma atividade e SALVA NO JSON"""
     carregar_todos_dados()
     
     # Busca atividade
@@ -300,40 +264,50 @@ def inscrever_senior(senior_id: int, atividade_id: int) -> dict:
     if not atividade:
         return {"sucesso": False, "mensagem": "Atividade nao encontrada."}
     
-    # Busca senior
+    # Busca senior na lista
     senior = None
-    for u in st.session_state.usuarios:
+    senior_index = -1
+    for i, u in enumerate(st.session_state.usuarios):
         if u.id == senior_id and isinstance(u, Senior):
             senior = u
+            senior_index = i
             break
     
     if not senior:
         return {"sucesso": False, "mensagem": "Senior nao encontrado."}
     
-    # Verifica se ja esta inscrito
+   
     for inscrito in atividade.inscritos:
         if inscrito.id == senior_id:
-            return {"sucesso": False, "mensagem": "Voce ja esta inscrito nesta atividade."}
+            return {"sucesso": False, "mensagem": "Voce ja esta inscrito."}
     
-    # Verifica vagas
+ 
     if not atividade.possui_vaga():
-        return {"sucesso": False, "mensagem": "Turma lotada. Nao ha vagas disponiveis."}
+        return {"sucesso": False, "mensagem": "Turma lotada."}
     
-    # FAZ A INSCRICAO
+
     atividade.inscritos.append(senior)
     senior.atividades_inscritas.append(atividade)
     
-    # Salva tudo
+ 
+    st.session_state.usuarios[senior_index] = senior
+    
+
+    if st.session_state.usuario_atual and st.session_state.usuario_atual.id == senior_id:
+        st.session_state.usuario_atual = senior
+    
+    for a in senior.atividades_inscritas:
+        print(a.id, a.titulo)
     _salvar_atividades()
     _salvar_usuarios()
     
+    print(f" Inscricao salva: {senior.nome} -> {atividade.titulo}")
+    print(f"   Atividades do senior: {[a.titulo for a in senior.atividades_inscritas]}")
+    
     return {"sucesso": True, "mensagem": f"Inscricao realizada com sucesso em: {atividade.titulo}!"}
 
-def cancelar_inscricao(senior_id: int, atividade_id: int) -> dict:
-    """
-    Cancela a inscricao de um senior.
-    Retorna: {'sucesso': bool, 'mensagem': str}
-    """
+def cancelar_inscricao(senior_id, atividade_id):
+    """Cancela a inscricao de um senior"""
     carregar_todos_dados()
     
     atividade = buscar_atividade_por_id(atividade_id)
@@ -341,21 +315,32 @@ def cancelar_inscricao(senior_id: int, atividade_id: int) -> dict:
         return {"sucesso": False, "mensagem": "Atividade nao encontrada."}
     
     senior = None
-    for u in st.session_state.usuarios:
+    senior_index = -1
+    for i, u in enumerate(st.session_state.usuarios):
         if u.id == senior_id and isinstance(u, Senior):
             senior = u
+            senior_index = i
             break
     
     if not senior:
         return {"sucesso": False, "mensagem": "Senior nao encontrado."}
     
-    # Remove da atividade
     atividade.inscritos = [i for i in atividade.inscritos if i.id != senior_id]
-    
-    # Remove do senior
     senior.atividades_inscritas = [a for a in senior.atividades_inscritas if a.id != atividade_id]
+    
+    st.session_state.usuarios[senior_index] = senior
+    
+    if st.session_state.usuario_atual and st.session_state.usuario_atual.id == senior_id:
+        st.session_state.usuario_atual = senior
     
     _salvar_atividades()
     _salvar_usuarios()
     
     return {"sucesso": True, "mensagem": "Inscricao cancelada com sucesso!"}
+
+def listar_atividades_do_senior(senior_id):
+    carregar_todos_dados()
+    for u in st.session_state.usuarios:
+        if u.id == senior_id and isinstance(u, Senior):
+            return u.atividades_inscritas
+    return []

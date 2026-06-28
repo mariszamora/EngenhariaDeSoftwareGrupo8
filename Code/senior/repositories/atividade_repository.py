@@ -1,19 +1,19 @@
-# repositories/atividade_repository.py - COM ARQUIVO JSON
 import json
 import os
 from models.atividade import AtividadePresencial, AtividadeRemota
 
 ARQUIVO_ATIVIDADES = "data/atividades.json"
 
+
 class AtividadeRepository:
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(AtividadeRepository, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         if self._initialized:
             return
@@ -21,49 +21,50 @@ class AtividadeRepository:
         self.atividades = []
         self.proximo_id = 1
         self.carregar_atividades()
-    
+
     def carregar_atividades(self):
-        """Carrega as atividades do arquivo JSON"""
         os.makedirs("data", exist_ok=True)
         
-        if os.path.exists(ARQUIVO_ATIVIDADES):
-            with open(ARQUIVO_ATIVIDADES, 'r', encoding='utf-8') as f:
-                dados = json.load(f)
-                self.proximo_id = dados.get("proximo_id", 1)
-                
-                for item in dados.get("atividades", []):
-                    if item["tipo"] == "Remota":
-                        atividade = AtividadeRemota(
-                            id=item["id"],
-                            titulo=item["titulo"],
-                            descricao=item["descricao"],
-                            data=item["data"],
-                            horario=item["horario"],
-                            tutor=None,  # Será resolvido depois
-                            local=item["local"],
-                            vagas=item["vagas"],
-                            link=item.get("link", "")
-                        )
-                    else:
-                        atividade = AtividadePresencial(
-                            id=item["id"],
-                            titulo=item["titulo"],
-                            descricao=item["descricao"],
-                            data=item["data"],
-                            horario=item["horario"],
-                            tutor=None,
-                            local=item["local"],
-                            vagas=item["vagas"],
-                            endereco=item.get("endereco", "")
-                        )
-                    
-                    # Recupera os inscritos (IDs serao resolvidos depois)
-                    self.atividades.append(atividade)
-        else:
+        if not os.path.exists(ARQUIVO_ATIVIDADES):
             self.criar_atividades_padrao()
-    
+            return
+
+        with open(ARQUIVO_ATIVIDADES, "r", encoding="utf-8") as arquivo:
+            dados = json.load(arquivo)
+        
+        self.proximo_id = dados.get("proximo_id", 1)
+        self.atividades = []
+        
+        for item in dados.get("atividades", []):
+            if item["tipo"] == "Remota":
+                atividade = AtividadeRemota(
+                    id=item["id"],
+                    titulo=item["titulo"],
+                    descricao=item["descricao"],
+                    data=item["data"],
+                    horario=item["horario"],
+                    tutor=None,
+                    local=item["local"],
+                    vagas=item["vagas"],
+                    link=item.get("link", "")
+                )
+            else:
+                atividade = AtividadePresencial(
+                    id=item["id"],
+                    titulo=item["titulo"],
+                    descricao=item["descricao"],
+                    data=item["data"],
+                    horario=item["horario"],
+                    tutor=None,
+                    local=item["local"],
+                    vagas=item["vagas"],
+                    endereco=item.get("endereco", "")
+                )
+            
+            atividade.inscritos = []
+            self.atividades.append(atividade)
+
     def criar_atividades_padrao(self):
-        """Cria atividades padrao"""
         self.adicionar(
             AtividadeRemota(
                 id=0,
@@ -103,10 +104,8 @@ class AtividadeRepository:
                 link="https://meet.google.com/"
             )
         )
-        self.salvar_atividades()
-    
+
     def salvar_atividades(self):
-        """Salva as atividades no arquivo JSON"""
         dados = {
             "proximo_id": self.proximo_id,
             "atividades": []
@@ -121,8 +120,7 @@ class AtividadeRepository:
                 "horario": atividade.horario,
                 "local": atividade.local,
                 "vagas": atividade.vagas,
-                "tipo": atividade.tipo(),
-                "inscritos": [u.id for u in atividade.inscritos]
+                "tipo": atividade.tipo()
             }
             
             if isinstance(atividade, AtividadeRemota):
@@ -132,35 +130,44 @@ class AtividadeRepository:
             
             dados["atividades"].append(item)
         
-        with open(ARQUIVO_ATIVIDADES, 'w', encoding='utf-8') as f:
-            json.dump(dados, f, ensure_ascii=False, indent=2)
-    
+        with open(ARQUIVO_ATIVIDADES, "w", encoding="utf-8") as arquivo:
+            json.dump(dados, arquivo, ensure_ascii=False, indent=2)
+
     def adicionar(self, atividade):
         atividade.id = self.proximo_id
         self.proximo_id += 1
+        atividade.inscritos = []
         self.atividades.append(atividade)
         self.salvar_atividades()
-    
+
     def listar(self):
         return self.atividades
-    
-    def buscar_por_id(self, id):
+
+    def buscar_por_id(self, id_atividade):
         for atividade in self.atividades:
-            if atividade.id == id:
+            if atividade.id == id_atividade:
                 return atividade
         return None
-    
+
     def buscar_por_data(self, data):
         resultado = []
         for atividade in self.atividades:
             if atividade.data == data:
                 resultado.append(atividade)
         return resultado
-    
-    def remover(self, id):
-        atividade = self.buscar_por_id(id)
-        if atividade is not None:
-            self.atividades.remove(atividade)
-            self.salvar_atividades()
-            return True
+
+    def atualizar(self, atividade):
+        for indice, existente in enumerate(self.atividades):
+            if existente.id == atividade.id:
+                self.atividades[indice] = atividade
+                self.salvar_atividades()
+                return True
         return False
+
+    def remover(self, id_atividade):
+        atividade = self.buscar_por_id(id_atividade)
+        if atividade is None:
+            return False
+        self.atividades.remove(atividade)
+        self.salvar_atividades()
+        return True

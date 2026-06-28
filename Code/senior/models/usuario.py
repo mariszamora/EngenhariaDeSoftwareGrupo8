@@ -1,4 +1,3 @@
-# models/usuario.py
 class Usuario:
     def __init__(
         self,
@@ -18,32 +17,25 @@ class Usuario:
         self.tamanho_fonte = tamanho_fonte
         self.alto_contraste = alto_contraste
 
+
 class Senior(Usuario):
-    def __init__(
-        self,
-        contato_emergencia,
-        **kwargs
-    ):
+    def __init__(self, contato_emergencia, **kwargs):
         super().__init__(**kwargs)
         self.contato_emergencia = contato_emergencia
         self.atividades_inscritas = []
+        self._ids_atividades_inscritas = []
 
-    def inscrever_em_atividade(self, atividade) -> bool:
-        # já inscrito?
+    def inscrever_em_atividade(self, atividade):
         if atividade in self.atividades_inscritas:
             return False
-
-        # tenta inscrever na atividade
         if not atividade.inscrever(self):
             return False
-
         self.atividades_inscritas.append(atividade)
         return True
 
-    def cancelar_inscricao(self, atividade) -> bool:
+    def cancelar_inscricao(self, atividade):
         if atividade not in self.atividades_inscritas:
             return False
-
         atividade.cancelar(self)
         self.atividades_inscritas.remove(atividade)
         return True
@@ -53,26 +45,26 @@ class Senior(Usuario):
 
 
 class Tutor(Usuario):
-    def __init__(
-        self,
-        especialidade,
-        **kwargs
-    ):
+    def __init__(self, especialidade, **kwargs):
         super().__init__(**kwargs)
         self.especialidade = especialidade
         self.atividades_criadas = []
-    
-    def criar_atividade(self, atividade) -> bool:
-        for existente in self.atividades_criadas:
-            if existente.id == atividade.id:
-                return False
-        
+        self._ids_atividades_criadas = []
+
+    def criar_atividade(self, atividade):
+        if atividade in self.atividades_criadas:
+            return False
         self.atividades_criadas.append(atividade)
+        atividade.tutor = self
         return True
-    
+
+    def remover_atividade(self, atividade):
+        if atividade in self.atividades_criadas:
+            self.atividades_criadas.remove(atividade)
+            if atividade.tutor == self:
+                atividade.tutor = None
+            return True
+        return False
+
     def listar_atividades_criadas(self):
         return self.atividades_criadas
-    
-    def remover_atividade(self, atividade) -> bool:
-        self.atividades_criadas = [a for a in self.atividades_criadas if a.id != atividade.id]
-        return True

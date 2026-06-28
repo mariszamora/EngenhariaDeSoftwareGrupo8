@@ -1,18 +1,18 @@
-# pages/calendario.py - AGORA SO CHAMA O SERVICE
+# pages/calendario.py - DO ZERO
 import streamlit as st
 import streamlit.components.v1 as components
 from models.atividade import AtividadePresencial, AtividadeRemota
-from services.atividade_service import (
-    listar_atividades, criar_atividade, buscar_atividade_por_id,
-    inscrever_senior, get_usuario_atual
-)
 from models.usuario import Tutor, Senior
+from services.atividade_service import (
+    listar_atividades,
+    criar_atividade,
+    buscar_atividade_por_id,
+    inscrever_senior,
+    get_usuario_atual
+)
 from datetime import datetime
 import calendar
 
-# ==========================================
-# FUNCOES AUXILIARES
-# ==========================================
 
 def obter_atividades_por_dia():
     atividades = {}
@@ -30,9 +30,8 @@ def get_mes_atual():
         st.session_state.ano_atual = agora.year
     return st.session_state.mes_atual, st.session_state.ano_atual
 
-# ==========================================
-# CLASSE DO CALENDARIO - MANTIDA IGUAL
-# ==========================================
+
+
 
 class CalendarioHTMLBuilder:
     def __init__(self, dias_calendario, atividades_por_dia, mes, ano, usuario):
@@ -248,17 +247,8 @@ class CalendarioHTMLBuilder:
                 function fecharModal() {{ overlay.classList.remove('active'); }}
                 
                 function confirmarInscricao(activityId) {{
-                    if (window.parent) {{
-                        window.parent.postMessage({{
-                            type: 'inscricao',
-                            activityId: activityId
-                        }}, '*');
-                    }}
-                    alert("Inscricao sendo processada...");
-                    fecharModal();
-                    setTimeout(function() {{
-                        window.location.href = window.location.href.split('?')[0] + '?inscrever=' + activityId;
-                    }}, 500);
+                    // <-- MUDA A URL PARA PROCESSAR A INSCRICAO
+                    window.location.href = window.location.href.split('?')[0] + '?inscrever=' + activityId;
                 }}
                 
                 overlay.addEventListener('click', (e) => {{ if(e.target === overlay) fecharModal(); }});
@@ -267,6 +257,7 @@ class CalendarioHTMLBuilder:
         </html>
         """
         components.html(codigo_interface, height=980, scrolling=True)
+
 
 # ==========================================
 # FUNCAO PRINCIPAL - RENDERIZAR
@@ -281,14 +272,12 @@ def renderizar():
         st.warning("Por favor, faca login para acessar o calendario.")
         return
 
-    # ==========================================
-    # PROCESSA INSCRICAO VIA URL - CHAMA O SERVICE
-    # ==========================================
+   
     query_params = st.query_params
+
     if "inscrever" in query_params:
         activity_id = int(query_params["inscrever"])
         
-        # <-- CHAMA O SERVICE, ELE FAZ TUDO
         resultado = inscrever_senior(usuario.id, activity_id)
         
         if resultado["sucesso"]:
@@ -299,9 +288,7 @@ def renderizar():
         st.query_params.clear()
         st.rerun()
     
-    # ==========================================
-    # PROCESSA NAVEGACAO VIA URL
-    # ==========================================
+ 
     if "navegar" in query_params:
         delta = int(query_params["navegar"])
         
@@ -323,14 +310,11 @@ def renderizar():
         
         st.query_params.clear()
         st.rerun()
-    
+   
     st.title("Calendario de Atividades")
     
     mes, ano = get_mes_atual()
-    
-    # ==========================================
-    # BOTOES DE NAVEGACAO DO MES
-    # ==========================================
+
     col1, col2, col3 = st.columns([1, 3, 1])
     with col1:
         if st.button("◀ Mes anterior", use_container_width=True):
@@ -355,12 +339,10 @@ def renderizar():
                 st.session_state.mes_atual += 1
             st.rerun()
     
-    # ==========================================
-    # FORMULARIO PARA TUTOR CRIAR ATIVIDADE
-    # ==========================================
+
     if isinstance(usuario, Tutor):
         st.divider()
-        st.subheader("👨‍🏫 Painel do Tutor")
+        st.subheader(" Painel do Tutor")
         
         with st.expander("➕ Criar nova atividade", expanded=False):
             with st.form("form_nova_atividade", clear_on_submit=True):
@@ -383,7 +365,7 @@ def renderizar():
                 
                 descricao = st.text_area("Descricao (opcional)", placeholder="Descreva a atividade...")
                 
-                if st.form_submit_button("✅ Salvar Atividade", use_container_width=True):
+                if st.form_submit_button(" Salvar Atividade", use_container_width=True):
                     if titulo and data and horario and local:
                         try:
                             if tipo == "Remota":

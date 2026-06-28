@@ -1,35 +1,33 @@
-# pages/pageatividades.py - AGORA SO CHAMA O SERVICE
-# pages/pageatividades.py - INICIO CORRIGIDO
 import streamlit as st
 import streamlit.components.v1 as components
 from models.usuario import Senior
 from services.atividade_service import get_usuario_atual, listar_atividades_do_senior
 
+
 def renderizar():
-    """Renderiza a pagina de atividades do senior"""
+    """Renderiza a página de atividades do sênior"""
     
     usuario = get_usuario_atual()
     
     if usuario is None:
-        st.warning("Por favor, faca login para acessar as atividades.")
+        st.warning("Por favor, faça login para acessar as atividades.")
         return
     
     if not isinstance(usuario, Senior):
-        st.warning("Esta pagina e apenas para Seniores.")
+        st.warning("Esta página é apenas para Seniores.")
         return
     
-    # <-- CHAMA O SERVICE PARA LISTAR
     atividades_inscrito = listar_atividades_do_senior(usuario.id)
     
     st.title("Minhas Atividades")
-    st.caption(f"Voce esta inscrito em {len(atividades_inscrito)} atividades")
+    st.caption(f"Você está inscrito em {len(atividades_inscrito)} atividades")
     
     if not atividades_inscrito:
-        st.info("Voce ainda nao se inscreveu em nenhuma atividade. Va ao Calendario para se inscrever!")
+        st.info("Você ainda não se inscreveu em nenhuma atividade. Vá ao Calendário para se inscrever!")
         return
     
     # ==========================================
-    # CONSTRUI OS CARDS DE ATIVIDADES
+    # CONSTRÓI OS CARDS DE ATIVIDADES
     # ==========================================
     cards_html = ""
     
@@ -41,7 +39,7 @@ def renderizar():
             icone = "📍"
             cor_fundo = "#8a7a7a"
         
-        nome_tutor = atividade.tutor.nome if atividade.tutor else "Nao definido"
+        nome_tutor = atividade.tutor.nome if atividade.tutor else "Não definido"
         
         cards_html += f"""
         <div class="card" style="background-color: {cor_fundo};">
@@ -59,7 +57,7 @@ def renderizar():
                 </div>
                 <div class="post-time">
                     <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-                    Data: {atividade.data} as {atividade.horario}
+                    Data: {atividade.data} às {atividade.horario}
                 </div>
                 <div class="post-time">
                     📍 {atividade.local}
@@ -337,12 +335,12 @@ def renderizar():
                 <div class="logo-placeholder">65+</div>
             </div>
             <nav>
-                <a href="?pagina=Calendario">Calendario</a>
+                <a href="?pagina=Calendario">Calendário</a>
                 <a href="?pagina=Mural">Mural Avisos</a>
                 <a href="?pagina=Atividades" class="active">Atividades</a>
                 <a href="?pagina=Ajuda">Ajuda</a>
                 <div class="user-menu">
-                    Ola, {usuario.nome}
+                    Olá, {usuario.nome}
                     <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M1 1L5 5L9 1" stroke="#2c5270" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>

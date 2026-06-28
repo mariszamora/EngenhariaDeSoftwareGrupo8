@@ -1,20 +1,19 @@
-# repositories/usuario_repository.py - CORRIGIDO
 import json
 import os
 from models.usuario import Senior, Tutor
-from services.atividade_service import buscar_por_id
 
 ARQUIVO_USUARIOS = "data/usuarios.json"
 
+
 class UsuarioRepository:
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(UsuarioRepository, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         if self._initialized:
             return
@@ -22,54 +21,55 @@ class UsuarioRepository:
         self.usuarios = []
         self.usuario_atual = None
         self.carregar_usuarios()
-    
+
     def carregar_usuarios(self):
-        """Carrega os usuarios do arquivo JSON"""
+        """Carrega os usuários do arquivo JSON."""
         os.makedirs("data", exist_ok=True)
         
-        if os.path.exists(ARQUIVO_USUARIOS):
-            with open(ARQUIVO_USUARIOS, 'r', encoding='utf-8') as f:
-                dados = json.load(f)
-                for item in dados:
-                    if item["tipo"] == "senior":
-                        usuario = Senior(
-                            id=item["id"],
-                            nome=item["nome"],
-                            email=item["email"],
-                            telefone=item["telefone"],
-                            senha=item["senha"],
-                            contato_emergencia=item["contato_emergencia"]
-                        )
-                        # <-- RECUPERA AS ATIVIDADES INSCRITAS
-                        usuario.atividades_inscritas = []
-                        for ativ_id in item.get("atividades_inscritas", []):
-                            atividade = buscar_por_id(ativ_id)
-                            if atividade:
-                                usuario.atividades_inscritas.append(atividade)
-                    else:
-                        usuario = Tutor(
-                            id=item["id"],
-                            nome=item["nome"],
-                            email=item["email"],
-                            telefone=item["telefone"],
-                            senha=item["senha"],
-                            especialidade=item["especialidade"]
-                        )
-                        usuario.atividades_criadas = []
-                        for ativ_id in item.get("atividades_criadas", []):
-                            atividade = buscar_por_id(ativ_id)
-                            if atividade:
-                                usuario.atividades_criadas.append(atividade)
-                    
-                    self.usuarios.append(usuario)
+        if not os.path.exists(ARQUIVO_USUARIOS):
+            self.criar_usuarios_padrao()
+            return
+
+        try:
+            with open(ARQUIVO_USUARIOS, "r", encoding="utf-8") as arquivo:
+                dados = json.load(arquivo)
+            
+            self.usuarios = []
+            
+            for item in dados:
+                if item["tipo"] == "senior":
+                    usuario = Senior(
+                        id=item["id"],
+                        nome=item["nome"],
+                        email=item["email"],
+                        telefone=item["telefone"],
+                        senha=item["senha"],
+                        contato_emergencia=item["contato_emergencia"]
+                    )
+                    # Carrega os IDs das atividades inscritas
+                    usuario._ids_atividades_inscritas = item.get("atividades_inscritas", [])
+                else:
+                    usuario = Tutor(
+                        id=item["id"],
+                        nome=item["nome"],
+                        email=item["email"],
+                        telefone=item["telefone"],
+                        senha=item["senha"],
+                        especialidade=item["especialidade"]
+                    )
+                    usuario._ids_atividades_criadas = item.get("atividades_criadas", [])
+                
+                self.usuarios.append(usuario)
             
             if self.usuarios:
                 self.usuario_atual = self.usuarios[0]
-        else:
+                
+        except Exception as e:
+            print(f"Erro ao carregar usuários: {e}")
             self.criar_usuarios_padrao()
-    
+
     def criar_usuarios_padrao(self):
-        """Cria usuarios padrao e salva no arquivo"""
+        """Cria usuários padrão se o arquivo não existir."""
         self.usuarios = [
             Senior(
                 id=1,
@@ -88,52 +88,88 @@ class UsuarioRepository:
                 especialidade="Educacao Fisica"
             )
         ]
+        
+        self.usuarios[0]._ids_atividades_inscritas = []
+        self.usuarios[1]._ids_atividades_criadas = []
+        
         self.usuario_atual = self.usuarios[0]
         self.salvar_usuarios()
-    
+
     def salvar_usuarios(self):
-        """Salva os usuarios no arquivo JSON"""
-        dados = []
-        for usuario in self.usuarios:
-            item = {
-                "id": usuario.id,
-                "nome": usuario.nome,
-                "email": usuario.email,
-                "telefone": usuario.telefone,
-                "senha": usuario.senha,
-            }
+        """Salva todos os usuários no arquivo JSON."""
+        try:
+            dados = []
             
-            if isinstance(usuario, Senior):
-                item["tipo"] = "senior"
-                item["contato_emergencia"] = usuario.contato_emergencia
-                item["atividades_inscritas"] = [a.id for a in usuario.atividades_inscritas]
-            else:
-                item["tipo"] = "tutor"
-                item["especialidade"] = usuario.especialidade
-                item["atividades_criadas"] = [a.id for a in usuario.atividades_criadas]
+            for usuario in self.usuarios:
+                item = {
+                    "id": usuario.id,
+                    "nome": usuario.nome,
+                    "email": usuario.email,
+                    "telefone": usuario.telefone,
+                    "senha": usuario.senha
+                }
+                
+                if isinstance(usuario, Senior):
+                    item["tipo"] = "senior"
+                    item["contato_emergencia"] = usuario.contato_emergencia
+                    
+                    # 🔥 SALVA OS IDs DAS ATIVIDADES INSCRITAS
+                    item["atividades_inscritas"] = [
+                        atividade.id for atividade in usuario.atividades_inscritas
+                    ]
+                    
+                    # Atualiza o cache de IDs
+                    usuario._ids_atividades_inscritas = item["atividades_inscritas"]
+                    
+                    # 🔥 DEBUG - Mostra o que está sendo salvo
+                    print(f"💾 Salvando {usuario.nome}: atividades_inscritas = {item['atividades_inscritas']}")
+                    
+                else:  # Tutor
+                    item["tipo"] = "tutor"
+                    item["especialidade"] = usuario.especialidade
+                    item["atividades_criadas"] = [
+                        atividade.id for atividade in usuario.atividades_criadas
+                    ]
+                    usuario._ids_atividades_criadas = item["atividades_criadas"]
+                
+                dados.append(item)
             
-            dados.append(item)
-        
-        with open(ARQUIVO_USUARIOS, 'w', encoding='utf-8') as f:
-            json.dump(dados, f, ensure_ascii=False, indent=2)
-    
+            # 🔥 DEBUG - Mostra o JSON que será salvo
+            print(f"💾 Salvando arquivo com {len(dados)} usuários")
+            
+            with open(ARQUIVO_USUARIOS, "w", encoding="utf-8") as arquivo:
+                json.dump(dados, arquivo, ensure_ascii=False, indent=2)
+                
+            print(f"✅ Arquivo {ARQUIVO_USUARIOS} salvo com sucesso!")
+            
+        except Exception as e:
+            print(f"❌ Erro ao salvar usuários: {e}")
+
     def get_usuario_atual(self):
         return self.usuario_atual
-    
+
     def set_usuario_atual(self, usuario):
         self.usuario_atual = usuario
-        self.salvar_usuarios()
-    
+
     def get_all(self):
         return self.usuarios
-    
+
+    def buscar_por_id(self, id_usuario):
+        for usuario in self.usuarios:
+            if usuario.id == id_usuario:
+                return usuario
+        return None
+
     def atualizar_usuario(self, usuario):
-        """Atualiza um usuario existente"""
-        for i, u in enumerate(self.usuarios):
-            if u.id == usuario.id:
-                self.usuarios[i] = usuario
-                if self.usuario_atual and self.usuario_atual.id == usuario.id:
+        """Atualiza um usuário e salva no arquivo."""
+        for indice, existente in enumerate(self.usuarios):
+            if existente.id == usuario.id:
+                self.usuarios[indice] = usuario
+                if self.usuario_atual is not None and self.usuario_atual.id == usuario.id:
                     self.usuario_atual = usuario
+                
+                # 🔥 FORÇA O SALVAMENTO IMEDIATO
                 self.salvar_usuarios()
+                print(f"✅ Usuário {usuario.nome} atualizado e salvo!")
                 return True
         return False
