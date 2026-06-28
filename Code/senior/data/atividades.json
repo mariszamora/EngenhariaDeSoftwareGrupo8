@@ -1,0 +1,82 @@
+{
+  "proximo_id": 8,
+  "atividades": [
+    {
+      "id": 1,
+      "titulo": "Roda de Conversa",
+      "descricao": "Conversa entre os participantes.",
+      "data": "01/06",
+      "horario": "13:30",
+      "local": "Sala Virtual",
+      "vagas": 30,
+      "tipo": "Remota",
+      "link": "https://meet.google.com/"
+    },
+    {
+      "id": 2,
+      "titulo": "Pilates",
+      "descricao": "Pilates para terceira idade.",
+      "data": "04/06",
+      "horario": "13:30",
+      "local": "Parque Central",
+      "vagas": 20,
+      "tipo": "Presencial",
+      "endereco": "Parque Central"
+    },
+    {
+      "id": 3,
+      "titulo": "Yoga",
+      "descricao": "Alongamento e relaxamento.",
+      "data": "08/06",
+      "horario": "08:00",
+      "local": "Google Meet",
+      "vagas": 40,
+      "tipo": "Remota",
+      "link": "https://meet.google.com/"
+    },
+    {
+      "id": 4,
+      "titulo": "hxfgh",
+      "descricao": "",
+      "data": "1/06",
+      "horario": "sccds",
+      "local": "fsd",
+      "vagas": 30,
+      "tipo": "Presencial",
+      "endereco": "fsd"
+    },
+    {
+      "id": 5,
+      "titulo": "ds",
+      "descricao": "",
+      "data": "2/06",
+      "horario": "fsd",
+      "local": "fs",
+      "vagas": 30,
+      "tipo": "Presencial",
+      "endereco": "fs"
+    },
+    {
+      "id": 6,
+      "titulo": "4er",
+      "descricao": "",
+      "data": "02/06",
+      "horario": "vsd",
+      "local": "cvds",
+      "vagas": 30,
+      "tipo": "Presencial",
+      "endereco": "cvds"
+    },
+    {
+      "id": 7,
+      "titulo": "wda",
+      "descricao": "",
+      "data": "15/06",
+      "horario": "sda",
+      "local": "das",
+      "vagas": 30,
+      "tipo": "Presencial",
+      "endereco": "das"
+    }
+  ]
+}
