@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "nome": "Antonio Silva",
+    "email": "antonio@email.com",
+    "telefone": "(11) 99999-9999",
+    "senha": "123",
+    "tipo": "senior",
+    "contato_emergencia": "Maria - (11) 98888-8888",
+    "atividades_inscritas": [
+      1
+    ]
+  },
+  {
+    "id": 2,
+    "nome": "Carlos Souza",
+    "email": "carlos@email.com",
+    "telefone": "(11) 98888-7777",
+    "senha": "321",
+    "tipo": "tutor",
+    "especialidade": "Educacao Fisica"
+  }
+]
