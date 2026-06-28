@@ -6,7 +6,6 @@ from models.usuario import Tutor, Senior
 from services.atividade_service import (
     listar_atividades,
     criar_atividade,
-    buscar_atividade_por_id,
     inscrever_senior,
     get_usuario_atual
 )
@@ -86,9 +85,7 @@ class CalendarioHTMLBuilder:
         meses = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", 
                  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
         nome_mes = meses[self.mes - 1]
-        
-        eh_senior = isinstance(self.usuario, Senior) if self.usuario else False
-        
+
         codigo_interface = f"""
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -155,10 +152,8 @@ class CalendarioHTMLBuilder:
             </header>
             <main class="desktop-container">
                 <div class="app-container">
-                    <div class="calendar-header">
-                        <button class="arrow-btn" id="btnAnterior" aria-label="Mes anterior">&lt;</button>
+                    <div class="calendar-header" style="justify-content: center;">
                         <h2>{nome_mes} {self.ano}</h2>
-                        <button class="arrow-btn" id="btnProximo" aria-label="Proximo mes">&gt;</button>
                     </div>
                     <div class="calendar-grid">
                         <div class="weekday">Domingo</div>
@@ -190,25 +185,6 @@ class CalendarioHTMLBuilder:
                 const mActions = document.getElementById('modalActions');
                 let currentActivityId = null;
 
-                function navegarMes(delta) {{
-                    if (window.parent) {{
-                        window.parent.postMessage({{
-                            type: 'navegar_mes',
-                            delta: delta
-                        }}, '*');
-                    }}
-                }}
-
-                document.getElementById('btnAnterior').addEventListener('click', function(e) {{
-                    e.preventDefault();
-                    navegarMes(-1);
-                }});
-
-                document.getElementById('btnProximo').addEventListener('click', function(e) {{
-                    e.preventDefault();
-                    navegarMes(1);
-                }});
-
                 function abrirModal(e, title, day, time, local, activityId) {{
                     e.stopPropagation();
                     currentActivityId = activityId;
@@ -217,18 +193,9 @@ class CalendarioHTMLBuilder:
                     mTime.innerText = ` Horario: ${{time}}`;
                     mLocal.innerText = ` Local: ${{local}}`;
                     
-                    const ehSenior = {str(eh_senior).lower()};
-                    
-                    if (ehSenior) {{
-                        mActions.innerHTML = `
-                            <button class="btn-modal btn-participar" onclick="confirmarInscricao(${{activityId}})">QUERO PARTICIPAR</button>
-                            <button class="btn-modal btn-fechar" onclick="fecharModal()">Voltar</button>
-                        `;
-                    }} else {{
-                        mActions.innerHTML = `
-                            <button class="btn-modal btn-fechar" onclick="fecharModal()">Voltar</button>
-                        `;
-                    }}
+                    mActions.innerHTML = `
+                        <button class="btn-modal btn-fechar" onclick="fecharModal()">Voltar</button>
+                    `;
                     overlay.classList.add('active');
                 }}
 
@@ -245,12 +212,7 @@ class CalendarioHTMLBuilder:
                 }});
 
                 function fecharModal() {{ overlay.classList.remove('active'); }}
-                
-                function confirmarInscricao(activityId) {{
-                    // <-- MUDA A URL PARA PROCESSAR A INSCRICAO
-                    window.location.href = window.location.href.split('?')[0] + '?inscrever=' + activityId;
-                }}
-                
+
                 overlay.addEventListener('click', (e) => {{ if(e.target === overlay) fecharModal(); }});
             </script>
         </body>
@@ -272,45 +234,6 @@ def renderizar():
         st.warning("Por favor, faca login para acessar o calendario.")
         return
 
-   
-    query_params = st.query_params
-
-    if "inscrever" in query_params:
-        activity_id = int(query_params["inscrever"])
-        
-        resultado = inscrever_senior(usuario.id, activity_id)
-        
-        if resultado["sucesso"]:
-            st.success(resultado["mensagem"])
-        else:
-            st.warning(resultado["mensagem"])
-        
-        st.query_params.clear()
-        st.rerun()
-    
- 
-    if "navegar" in query_params:
-        delta = int(query_params["navegar"])
-        
-        mes = st.session_state.mes_atual
-        ano = st.session_state.ano_atual
-        
-        if delta == -1:
-            if mes == 1:
-                st.session_state.mes_atual = 12
-                st.session_state.ano_atual -= 1
-            else:
-                st.session_state.mes_atual -= 1
-        elif delta == 1:
-            if mes == 12:
-                st.session_state.mes_atual = 1
-                st.session_state.ano_atual += 1
-            else:
-                st.session_state.mes_atual += 1
-        
-        st.query_params.clear()
-        st.rerun()
-   
     st.title("Calendario de Atividades")
     
     mes, ano = get_mes_atual()
