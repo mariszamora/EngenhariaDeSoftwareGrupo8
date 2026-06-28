@@ -437,3 +437,24 @@ def renderizar():
     
     grid_gerado = view_calendario.construir_grid_items()
     view_calendario.renderizar_template_completo(grid_gerado)
+
+    if isinstance(usuario, Senior):
+        st.divider()
+        st.subheader("✍️ Inscrever-se em uma atividade")
+
+        todas = listar_atividades()
+        if not todas:
+            st.info("Nenhuma atividade disponivel no momento.")
+        else:
+            opcoes = {
+                f"{a.titulo} — {a.data} as {a.horario} ({a.local})": a.id
+                for a in todas
+            }
+            escolha = st.selectbox("Escolha a atividade:", list(opcoes.keys()))
+
+            if st.button("Quero participar", use_container_width=True):
+                resultado = inscrever_senior(usuario.id, opcoes[escolha])
+                if resultado["sucesso"]:
+                    st.success(resultado["mensagem"])
+                else:
+                    st.warning(resultado["mensagem"])
