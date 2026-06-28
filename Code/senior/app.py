@@ -2,6 +2,7 @@
 import streamlit as st
 import telas.calendario as calendario
 import telas.pageatividades as atividades
+import telas.mural as mural
 from models.usuario import Senior, Tutor
 from services.atividade_service import (
     get_usuario_atual, set_usuario_atual, get_all_usuarios,
@@ -165,7 +166,7 @@ with st.sidebar:
 
 st.title("Comunidade 65+")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button(" CALENDÁRIO", use_container_width=True):
@@ -178,6 +179,11 @@ with col2:
         st.rerun()
 
 with col3:
+    if st.button("📢 MURAL DE AVISOS", use_container_width=True):
+        st.session_state.pagina = "Mural"
+        st.rerun()
+
+with col4:
     if isinstance(usuario, Tutor):
         if st.button("➕ ADICIONAR EVENTO", use_container_width=True):
             st.session_state.pagina = "Calendario"
@@ -193,5 +199,7 @@ if st.session_state.pagina == "Calendario":
     calendario.renderizar()
 elif st.session_state.pagina == "Atividades":
     atividades.renderizar()
+elif st.session_state.pagina == "Mural":
+    mural.renderizar()
 else:
     st.info("Página em desenvolvimento...")

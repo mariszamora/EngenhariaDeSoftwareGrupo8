@@ -2,14 +2,17 @@
 import streamlit as st
 import json
 import os
+from datetime import datetime
 from models.atividade import AtividadePresencial, AtividadeRemota
 from models.usuario import Senior, Tutor
+from models.aviso import Aviso
 
 PASTA_DADOS = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"
 )
 ARQUIVO_ATIVIDADES = os.path.join(PASTA_DADOS, "atividades.json")
 ARQUIVO_USUARIOS = os.path.join(PASTA_DADOS, "usuarios.json")
+ARQUIVO_AVISOS = os.path.join(PASTA_DADOS, "avisos.json")
 
 # ==========================================
 # CARREGAR DADOS
@@ -107,6 +110,17 @@ def carregar_todos_dados():
                     especialidade="Educacao Fisica"
                 )
             ]
+
+    # Carrega avisos
+    if "avisos" not in st.session_state:
+        if os.path.exists(ARQUIVO_AVISOS):
+            with open(ARQUIVO_AVISOS, 'r', encoding='utf-8') as f:
+                dados = json.load(f)
+                st.session_state.avisos = [Aviso(**item) for item in dados.get("avisos", [])]
+                st.session_state.proximo_aviso_id = dados.get("proximo_aviso_id", 1)
+        else:
+            st.session_state.avisos = []
+            st.session_state.proximo_aviso_id = 1
 
 def _criar_atividades_padrao():
     """Cria atividades padrao"""
@@ -344,3 +358,48 @@ def listar_atividades_do_senior(senior_id):
         if u.id == senior_id and isinstance(u, Senior):
             return u.atividades_inscritas
     return []
+
+
+# ==========================================
+# MURAL DE AVISOS
+# ==========================================
+
+def _salvar_avisos():
+    """Salva avisos no JSON"""
+    if "avisos" not in st.session_state:
+        return
+
+    dados = {
+        "proximo_aviso_id": st.session_state.proximo_aviso_id,
+        "avisos": [aviso.to_dict() for aviso in st.session_state.avisos]
+    }
+
+    os.makedirs(PASTA_DADOS, exist_ok=True)
+    with open(ARQUIVO_AVISOS, 'w', encoding='utf-8') as f:
+        json.dump(dados, f, ensure_ascii=False, indent=2)
+
+def listar_avisos():
+    carregar_todos_dados()
+    return st.session_state.avisos
+
+def criar_aviso(titulo, mensagem, autor):
+    """Publica um novo aviso no mural"""
+    carregar_todos_dados()
+
+    aviso = Aviso(
+        id=st.session_state.proximo_aviso_id,
+        titulo=titulo,
+        mensagem=mensagem,
+        autor=autor,
+        data=datetime.now().strftime("%d/%m/%Y %H:%M")
+    )
+    st.session_state.proximo_aviso_id += 1
+    st.session_state.avisos.insert(0, aviso)
+    _salvar_avisos()
+    return aviso
+
+def remover_aviso(aviso_id):
+    """Remove um aviso do mural"""
+    carregar_todos_dados()
+    st.session_state.avisos = [a for a in st.session_state.avisos if a.id != aviso_id]
+    _salvar_avisos()
