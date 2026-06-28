@@ -1,7 +1,11 @@
 import streamlit as st
 import streamlit.components.v1 as components
 from models.usuario import Senior
-from services.atividade_service import get_usuario_atual, listar_atividades_do_senior
+from services.atividade_service import (
+    get_usuario_atual,
+    listar_atividades_do_senior,
+    cancelar_inscricao
+)
 
 
 def renderizar():
@@ -357,3 +361,27 @@ def renderizar():
     """
     
     components.html(html_completo, height=800, scrolling=True)
+
+    st.divider()
+    st.subheader("Gerenciar inscrições")
+    st.caption("Cancele sua participação em uma atividade, se precisar.")
+
+    for atividade in atividades_inscrito:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown(
+                f"**{atividade.titulo}** — {atividade.data} às {atividade.horario} "
+                f"({atividade.local})"
+            )
+        with col2:
+            if st.button(
+                "Cancelar inscrição",
+                key=f"cancelar_{atividade.id}",
+                use_container_width=True
+            ):
+                resultado = cancelar_inscricao(usuario.id, atividade.id)
+                if resultado["sucesso"]:
+                    st.success(resultado["mensagem"])
+                    st.rerun()
+                else:
+                    st.warning(resultado["mensagem"])
