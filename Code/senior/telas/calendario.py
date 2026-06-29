@@ -88,37 +88,47 @@ def renderizar():
         st.warning(st.session_state.flash_msg_error)
         del st.session_state.flash_msg_error
 
-    # --- CSS PARA TRAVAR O DESIGN DA GRADE ---
+    # --- CSS CORRIGIDO PARA A GRADE E BOTÕES ---
     st.markdown("""
     <style>
+        /* Ajuste das colunas para remover espaços laterais em excesso */
         div[data-testid="column"] {
             padding: 0 4px !important;
         }
-        /* Configura os blocos de dia do calendário */
+        /* Estilo base dos blocos do calendário */
         div[data-testid="stVerticalBlockBorderWrapper"] {
             background-color: white !important;
             border-radius: 8px !important;
-            padding: 6px !important;
+            padding: 8px !important;
+            border: 2px solid #e9e6e7 !important;
         }
-        /* Esconde a barra de rolagem se a atividade for muito longa */
+        /* Efeito visual ao passar o mouse no dia */
+        div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+            border-color: #7d4ba7 !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.06) !important;
+        }
+        /* Esconde barra de rolagem se houver muito texto */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
             overflow: hidden !important; 
         }
-        /* Força apenas os botões DENTRO do calendário a serem menores */
-        div[data-testid="stVerticalBlockBorderWrapper"] button {
-            min-height: 28px !important;
-            height: 28px !important;
-            padding: 0 8px !important;
-            font-size: 0.75rem !important;
-            background-color: #a0bcd3 !important;
+        /* Regra de ALTA ESPECIFICIDADE para o botão 'Saiba mais' vencer o css global do app.py */
+        div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] button {
+            min-height: 32px !important;
+            height: 32px !important;
+            padding: 0 10px !important;
+            font-size: 0.8rem !important;
+            background-color: #f4f6f9 !important;
             color: #1a4263 !important;
+            border: 1px solid #d0d7de !important;
             border-radius: 6px !important;
-            margin-top: 4px !important;
-            border: none !important;
+            margin-top: 10px !important; /* Espaço limpo e sem sobreposição */
+            width: 100% !important;
+            box-shadow: none !important;
+            line-height: 1 !important;
         }
-        div[data-testid="stVerticalBlockBorderWrapper"] button:hover {
-            background-color: #1a4263 !important;
-            color: white !important;
+        div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] button:hover {
+            background-color: #a0bcd3 !important;
+            border-color: #1a4263 !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -132,7 +142,7 @@ def renderizar():
     eh_senior = isinstance(usuario, Senior)
     eh_tutor = isinstance(usuario, Tutor)
 
-    # 1. Navegação
+    # 1. Navegação de Meses
     col_left, col_center, col_right = st.columns([1, 3, 1])
     with col_left:
         if st.button("◀", use_container_width=True):
@@ -153,6 +163,9 @@ def renderizar():
                 st.session_state.mes_atual += 1
             st.rerun()
 
+    # Espaçador para afastar os dias da semana dos botões de navegação
+    st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
+
     # 2. Dados do Mês
     atividades_por_dia = {}
     for a in listar_atividades():
@@ -170,19 +183,29 @@ def renderizar():
     dias_semana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
     cols_header = st.columns(7)
     for i, col in enumerate(cols_header):
-        col.markdown(f"<div style='text-align:center; font-weight:700; color:#725353; font-size:0.95rem; padding-bottom:6px; border-bottom:2px solid #e9e6e7;'>{dias_semana[i]}</div>", unsafe_allow_html=True)
-    
-    st.markdown("<div style='margin-bottom:8px;'></div>", unsafe_allow_html=True)
+        with col:
+            st.markdown(f"""
+            <div style='
+                text-align:center; 
+                font-weight:700; 
+                color:#725353; 
+                font-size:0.95rem; 
+                background-color:#e9e6e7; 
+                padding:8px 0; 
+                border-radius:6px;
+                border-bottom: 3px solid #d5d1d2;
+                margin-bottom: 10px;
+            '>{dias_semana[i]}</div>
+            """, unsafe_allow_html=True)
 
-    # 4. Grade Nativa do Calendário com TAMANHO FIXO MAIOR (height=210)
+    # 4. Grade do Calendário (Com altura ampliada para 230px para acomodar tudo com sobra)
     for semana in semanas:
         cols = st.columns(7)
         for i, dia in enumerate(semana):
             with cols[i]:
                 if dia != 0:
-                    # Todos os dias preenchidos terão exatos 210px de altura
-                    with st.container(height=210, border=True):
-                        st.markdown(f"<div style='text-align:right; font-weight:700; color:#333; font-size:0.85rem; margin-bottom:2px;'>{dia}</div>", unsafe_allow_html=True)
+                    with st.container(height=230, border=True):
+                        st.markdown(f"<div style='text-align:right; font-weight:700; color:#333; font-size:0.9rem; margin-bottom:4px;'>{dia}</div>", unsafe_allow_html=True)
                         
                         lista = atividades_por_dia.get(dia, [])
                         if lista:
@@ -190,21 +213,20 @@ def renderizar():
                             cor = "🔵" if a.tipo() == "Remota" else "📍"
                             
                             st.markdown(f"""
-                            <div style='background:#f4f6f9; padding:6px; border-radius:4px; border-left:3px solid #7d4ba7; margin-bottom:4px;'>
-                                <div style='font-size:0.8rem; font-weight:bold; color:#1a4263; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>{a.titulo}</div>
-                                <div style='font-size:0.7rem; color:#555; margin-top:2px;'>{cor} {a.horario}</div>
+                            <div style='background:#f4f6f9; padding:8px; border-radius:6px; border-left:4px solid #7d4ba7; box-shadow: 0 1px 3px rgba(0,0,0,0.05);'>
+                                <div style='font-size:0.75rem; font-weight:bold; color:#1a4263; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>{a.titulo}</div>
+                                <div style='font-size:0.7rem; color:#555; margin-top:4px;'>{cor} {a.horario}</div>
                             </div>
                             """, unsafe_allow_html=True)
                             
                             if len(lista) > 1:
-                                st.markdown(f"<div style='font-size:0.65rem; color:#888; text-align:center;'>+{len(lista)-1} mais</div>", unsafe_allow_html=True)
+                                st.markdown(f"<div style='font-size:0.65rem; color:#888; text-align:center; padding-top:4px;'>+{len(lista)-1} mais</div>", unsafe_allow_html=True)
                             
                             if st.button("Saiba mais", key=f"mod_{mes}_{dia}_{a.id}", use_container_width=True):
                                 modal_detalhes(a.id)
                 else:
-                    # Dias vazios TAMBÉM terão exatos 210px para garantir o alinhamento total!
-                    with st.container(height=210, border=True):
-                        st.markdown("<div style='text-align:center; color:#ccc; margin-top:50px; font-size:1.5rem;'>-</div>", unsafe_allow_html=True)
+                    with st.container(height=230, border=True):
+                        st.markdown("<div style='text-align:center; color:#ccc; margin-top:60px; font-size:1.5rem;'>-</div>", unsafe_allow_html=True)
 
     # Painel de criação de atividade (Tutor)
     if eh_tutor and st.session_state.mostra_painel_tutor:
