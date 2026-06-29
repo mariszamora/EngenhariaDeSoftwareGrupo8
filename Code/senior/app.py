@@ -4,14 +4,17 @@ import telas.pageatividades as atividades
 import telas.mural as mural
 from models.usuario import Senior, Tutor
 from services.atividade_service import (
-    get_usuario_atual, set_usuario_atual, get_all_usuarios,
-    carregar_todos_dados
+    get_usuario_atual,
+    set_usuario_atual,
+    get_all_usuarios,
+    carregar_todos_dados,
 )
 
 st.set_page_config(page_title="Comunidade 65+", layout="wide")
 
 # CSS para remover elementos nativos e ajustar layout
-st.markdown("""
+st.markdown(
+    """
 <style>
     header[data-testid="stHeader"],
     [data-testid="stToolbar"],
@@ -87,7 +90,9 @@ st.markdown("""
         transform: translateY(1px) !important;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Carrega dados
 carregar_todos_dados()
@@ -97,6 +102,7 @@ if "pagina" not in st.session_state:
     st.session_state.pagina = "Calendario"
 if "mes_atual" not in st.session_state:
     from datetime import datetime
+
     now = datetime.now()
     st.session_state.mes_atual = now.month
     st.session_state.ano_atual = now.year
@@ -109,11 +115,14 @@ usuario = get_usuario_atual()
 
 # Tela de login
 if usuario is None:
-    st.markdown("""
+    st.markdown(
+        """
         <style>
             .block-container { padding: 4rem !important; }
         </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
     st.title("Comunidade 65+")
     st.caption("Escolha um perfil para acessar o sistema")
     st.divider()
@@ -122,7 +131,9 @@ if usuario is None:
         st.subheader("Sênior")
         st.write("Acesse o calendário, veja atividades e se inscreva!")
         if st.button("Entrar como SÊNIOR", use_container_width=True):
-            senior = next((u for u in get_all_usuarios() if isinstance(u, Senior)), None)
+            senior = next(
+                (u for u in get_all_usuarios() if isinstance(u, Senior)), None
+            )
             if senior:
                 set_usuario_atual(senior)
                 st.rerun()
@@ -143,17 +154,20 @@ if usuario is None:
 eh_tutor = isinstance(usuario, Tutor)
 
 # Navbar
-col1, col2, col3, col4, col5, col_spacer, col_tutor, col_aviso, col_profile = st.columns(
-    [1, 1.5, 1.5, 1.5, 1.5, 1.5, 1.2, 1.2, 1.8]
+col1, col2, col3, col4, col5, col_spacer, col_tutor, col_aviso, col_profile = (
+    st.columns([1, 1.5, 1.5, 1.5, 1.5, 1.5, 1.2, 1.2, 1.8])
 )
 
 with col1:
-    st.markdown("""
+    st.markdown(
+        """
     <div style="text-align: center; padding: 8px 0;">
         <span style="font-size: 1.1rem; font-weight: 900; background: linear-gradient(45deg, #f39c12, #9b59b6); 
                      -webkit-background-clip: text; -webkit-text-fill-color: transparent;">65+</span>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 with col2:
     if st.button("Calendário", use_container_width=True, key="btn_calendario"):
@@ -177,14 +191,22 @@ with col5:
 
 with col_tutor:
     if eh_tutor:
-        if st.button("Nova Atividade", use_container_width=True, key="btn_nova_atividade"):
-            st.session_state.mostra_painel_tutor = not st.session_state.mostra_painel_tutor
+        if st.button(
+            "Nova Atividade", use_container_width=True, key="btn_nova_atividade"
+        ):
+            st.session_state.mostra_painel_tutor = (
+                not st.session_state.mostra_painel_tutor
+            )
+            st.session_state.pagina = "Calendario"
             st.rerun()
 
 with col_aviso:
     if eh_tutor:
         if st.button("Novo Aviso", use_container_width=True, key="btn_novo_aviso"):
-            st.session_state.mostra_painel_aviso = not st.session_state.mostra_painel_aviso
+            st.session_state.mostra_painel_aviso = (
+                not st.session_state.mostra_painel_aviso
+            )
+            st.session_state.pagina = "Mural"
             st.rerun()
 
 with col_profile:
