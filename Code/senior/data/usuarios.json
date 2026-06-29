@@ -7,7 +7,10 @@
     "senha": "123",
     "tipo": "senior",
     "contato_emergencia": "Maria - (11) 98888-8888",
-    "atividades_inscritas": []
+    "atividades_inscritas": [
+      1,
+      5
+    ]
   },
   {
     "id": 2,
