@@ -1,0 +1,9 @@
+checklist de coisas a fazer:
+    colocar pra mudar o perfil entre sênior e tutor
+    página de avisos
+    colocar trocar por Tutor nao definido para o tutor que colocou a atividade
+✓   botão de cancelar atividade 
+    bug visual na pagina de atividades
+    modal para confirmar cancelamento da atividade
+    mensagem que confirma inscrição
+    modal bugado no calendario
