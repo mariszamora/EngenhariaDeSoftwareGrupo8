@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "titulo": "Bem-vindos!",
+    "data": "01/06/2026",
+    "conteudo": "A Comunidade 65+ está no ar! Fiquem atentos aos avisos."
+  },
+  {
+    "id": 2,
+    "titulo": "Novo curso de Dança",
+    "data": "15/06/2026",
+    "conteudo": "Aulas de dança todas as terças e quintas, 10h."
+  }
+]

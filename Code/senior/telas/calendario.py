@@ -1,244 +1,151 @@
-# telas/calendario.py
 import streamlit as st
-import streamlit.components.v1 as components
+import calendar
 from models.atividade import AtividadePresencial, AtividadeRemota
 from models.usuario import Tutor, Senior
 from services.atividade_service import (
     listar_atividades, criar_atividade,
-    inscrever_senior, get_usuario_atual
+    inscrever_senior, get_usuario_atual, deletar_atividade
 )
-import calendar
-import json
 
+# ══════════════════════════════════════════
+# LÓGICA INTERNA DO MODAL
+# ══════════════════════════════════════════
+def conteudo_modal(atividade_id):
+    usuario = get_usuario_atual()
+    eh_senior = isinstance(usuario, Senior)
+    eh_tutor = isinstance(usuario, Tutor)
+    
+    atividade = next((a for a in listar_atividades() if a.id == atividade_id), None)
+    if not atividade:
+        st.error("Atividade não encontrada.")
+        return
 
-def _atividades_por_dia() -> dict:
-    result = {}
-    for a in listar_atividades():
-        result.setdefault(a.data, []).append(a)
-    return result
+    st.markdown(f"**Data:** {atividade.data}")
+    st.markdown(f"**Horário:** {atividade.horario}")
+    st.markdown(f"**Local:** {atividade.local}")
+    tutor_nome = atividade.tutor.nome if atividade.tutor else "Não definido"
+    st.markdown(f"**Tutor:** {tutor_nome}")
+    
+    if atividade.descricao:
+        st.markdown(f"**Descrição:** {atividade.descricao}")
+        
+    vagas_restantes = atividade.vagas - len(atividade.inscritos)
+    st.markdown(f"**Vagas disponíveis:** {vagas_restantes}")
+    
+    st.divider()
 
-
-def _grid_html(dias: list, por_dia: dict) -> str:
-    html = ""
-    for dia in dias:
-        lista = por_dia.get(dia, [])
-        if lista:
-            a = lista[0]
-            cor_btn = "blue-btn" if a.tipo() == "Remota" else ""
-            local_curto = a.local if len(a.local) <= 14 else a.local[:12] + "…"
-            mais = f"<div class='mais'>+{len(lista)-1} mais</div>" if len(lista) > 1 else ""
-            # json.dumps garante escape correto mesmo com apóstrofos no título
-            args = ", ".join([
-                str(a.id),
-                json.dumps(a.titulo),
-                json.dumps(dia),
-                json.dumps(a.horario),
-                json.dumps(a.local),
-                json.dumps(a.descricao),
-            ])
-            html += f"""
-            <button class="day-cell" onclick="abrirModal(event,{args})">
-                <div class="day-number">{dia}</div>
-                <div class="event-card">
-                    <div class="event-title">{a.titulo}</div>
-                    <div class="event-info">🕐 {a.horario}</div>
-                    <div class="event-info">📍 {local_curto}</div>
-                    {mais}
-                    <div class="btn-details {cor_btn}">Saiba mais</div>
-                </div>
-            </button>"""
+    if eh_senior:
+        ja_inscrito = any(a.id == atividade.id for a in usuario.atividades_inscritas)
+        if ja_inscrito:
+            st.info("✅ Você já está inscrito nesta atividade.")
         else:
-            html += f"""
-            <button class="day-cell empty" onclick="abrirModalVazio(event,'{dia}')">
-                <div class="day-number">{dia}</div>
-            </button>"""
-    return html
+            if st.button("✅ Quero Participar", use_container_width=True):
+                resultado = inscrever_senior(usuario.id, atividade.id)
+                if resultado["sucesso"]:
+                    st.session_state.flash_msg = resultado["mensagem"]
+                else:
+                    st.session_state.flash_msg_error = resultado["mensagem"]
+                st.rerun()
+                
+    if eh_tutor:
+        st.warning("Deseja deletar esta atividade? Isso removerá as inscrições de todos os alunos.")
+        col_sim, col_nao = st.columns(2)
+        with col_sim:
+            if st.button("Sim, Deletar", use_container_width=True, key="btn_sim_del"):
+                if deletar_atividade(atividade.id):
+                    st.session_state.flash_msg = f"Atividade '{atividade.titulo}' deletada com sucesso!"
+                else:
+                    st.session_state.flash_msg_error = "Erro ao deletar atividade."
+                st.rerun()
+        with col_nao:
+            if st.button("Cancelar", use_container_width=True, key="btn_nao_del"):
+                st.rerun()
 
+dialog_decorator = getattr(st, "dialog", getattr(st, "experimental_dialog", None))
 
+if dialog_decorator:
+    @dialog_decorator("📌 Detalhes da Atividade")
+    def modal_detalhes(atividade_id):
+        conteudo_modal(atividade_id)
+else:
+    def modal_detalhes(atividade_id):
+        with st.expander("📌 Detalhes da Atividade", expanded=True):
+            conteudo_modal(atividade_id)
+
+# ══════════════════════════════════════════
+# RENDERIZAÇÃO PRINCIPAL DO CALENDÁRIO
+# ══════════════════════════════════════════
 def renderizar():
     usuario = get_usuario_atual()
-    if usuario is None:
-        st.warning("Por favor, faça login para acessar o calendário.")
+    if not usuario:
+        st.warning("Faça login para acessar o calendário.")
         return
+
+    if "flash_msg" in st.session_state:
+        st.success(st.session_state.flash_msg)
+        del st.session_state.flash_msg
+    if "flash_msg_error" in st.session_state:
+        st.warning(st.session_state.flash_msg_error)
+        del st.session_state.flash_msg_error
+
+    # --- CSS PARA TRAVAR O DESIGN DA GRADE ---
+    st.markdown("""
+    <style>
+        div[data-testid="column"] {
+            padding: 0 4px !important;
+        }
+        /* Configura os blocos de dia do calendário */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            background-color: white !important;
+            border-radius: 8px !important;
+            padding: 6px !important;
+        }
+        /* Esconde a barra de rolagem se a atividade for muito longa */
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            overflow: hidden !important; 
+        }
+        /* Força apenas os botões DENTRO do calendário a serem menores */
+        div[data-testid="stVerticalBlockBorderWrapper"] button {
+            min-height: 28px !important;
+            height: 28px !important;
+            padding: 0 8px !important;
+            font-size: 0.75rem !important;
+            background-color: #a0bcd3 !important;
+            color: #1a4263 !important;
+            border-radius: 6px !important;
+            margin-top: 4px !important;
+            border: none !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] button:hover {
+            background-color: #1a4263 !important;
+            color: white !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
     mes = st.session_state.mes_atual
     ano = st.session_state.ano_atual
     nomes_mes = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
-    nome_mes = nomes_mes[mes - 1]
-
-    _, num_dias = calendar.monthrange(ano, mes)
-    dias = [f"{d:02d}/{mes:02d}" for d in range(1, num_dias + 1)]
-    grid = _grid_html(dias, _atividades_por_dia())
+    nome_mes = nomes_mes[mes-1]
 
     eh_senior = isinstance(usuario, Senior)
-    eh_tutor  = isinstance(usuario, Tutor)
+    eh_tutor = isinstance(usuario, Tutor)
 
-    params = st.query_params
-    if "inscrever" in params and eh_senior:
-        resultado = inscrever_senior(usuario.id, int(params["inscrever"]))
-        params.clear()
-        if resultado["sucesso"]:
-            st.success(resultado["mensagem"])
-        else:
-            st.warning(resultado["mensagem"])
-        st.rerun()
-
-    codigo_interface = f"""<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<style>
-  *{{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif;}}
-  html,body{{background:transparent;}}
-
-  /* ── Cabeçalho do mês ── */
-  .cal-header{{background:#a78b8b;color:#3b2323;display:flex;justify-content:space-between;
-    align-items:center;padding:14px 24px;border-radius:10px 10px 0 0;}}
-  .cal-header h2{{font-size:1.8rem;font-weight:bold;}}
-  .arrow-btn{{background:none;border:none;font-size:2rem;color:#3b2323;cursor:pointer;padding:0 10px;line-height:1;}}
-  .arrow-btn:hover{{color:#000;}}
-
-  /* ── Grid ── */
-  .cal-box{{background:white;border:3px solid #7d4ba7;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;}}
-  .calendar-grid{{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:12px;}}
-  .weekday{{text-align:center;font-weight:700;color:#725353;font-size:.95rem;padding:6px 0;border-bottom:2px solid #e9e6e7;}}
-  .day-cell{{background:#e9e6e7;min-height:130px;border-radius:7px;display:flex;flex-direction:column;
-    padding:5px;border:2px solid transparent;cursor:pointer;text-align:left;width:100%;transition:all .15s;}}
-  .day-cell:hover{{border-color:#7d4ba7;background:#e2dedf;transform:translateY(-2px);}}
-  .day-cell.empty{{cursor:default;}}
-  .day-cell.empty:hover{{transform:none;border-color:transparent;background:#e9e6e7;}}
-  .day-number{{background:white;width:100%;text-align:center;font-size:.85rem;font-weight:700;color:#333;
-    padding:2px 0;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.1);margin-bottom:5px;}}
-  .event-card{{background:white;width:100%;border-radius:5px;padding:5px;box-shadow:0 2px 5px rgba(0,0,0,.07);
-    display:flex;flex-direction:column;flex-grow:1;}}
-  .event-title{{font-size:.85rem;font-weight:700;color:#4a3636;line-height:1.2;margin-bottom:2px;}}
-  .event-info{{font-size:.75rem;color:#555;margin-bottom:2px;}}
-  .mais{{font-size:.7rem;color:#888;margin-top:2px;}}
-  .btn-details{{background:#a78b8b;color:white;border:none;border-radius:13px;font-size:.75rem;
-    padding:4px 0;width:100%;margin-top:4px;font-weight:700;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;text-align:center;}}
-  .btn-details.blue-btn{{background:#a0bcd3;color:#1a4263;}}
-
-  /* ── Modal ── */
-  .modal-overlay{{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);
-    display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;
-    transition:opacity .2s;z-index:500;}}
-  .modal-overlay.active{{opacity:1;pointer-events:auto;}}
-  .modal-content{{background:white;padding:28px;border-radius:12px;width:90%;max-width:440px;
-    box-shadow:0 10px 30px rgba(0,0,0,.3);border:3px solid #7d4ba7;text-align:center;}}
-  .modal-title{{font-size:1.5rem;color:#1a4263;margin-bottom:12px;font-weight:700;}}
-  .modal-text{{font-size:1rem;margin-bottom:7px;color:#444;}}
-  .modal-actions{{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}}
-  .btn-modal{{padding:10px 20px;font-size:.95rem;font-weight:700;border-radius:20px;
-    cursor:pointer;border:none;min-height:44px;}}
-  .btn-participar{{background:#27ae60;color:white;}}
-  .btn-participar:hover{{background:#219a52;}}
-  .btn-fechar{{background:#e74c3c;color:white;}}
-  .btn-fechar:hover{{background:#c0392b;}}
-
-  @media(max-width:700px){{
-    .calendar-grid{{gap:3px;padding:8px;}}
-    .day-cell{{min-height:80px;padding:3px;}}
-    .cal-header h2{{font-size:1.3rem;}}
-  }}
-</style>
-</head>
-<body>
-  <div style="padding:12px 16px;">
-    <div class="cal-box">
-      <div class="calendar-grid">
-        <div class="weekday">Dom</div><div class="weekday">Seg</div>
-        <div class="weekday">Ter</div><div class="weekday">Qua</div>
-        <div class="weekday">Qui</div><div class="weekday">Sex</div>
-        <div class="weekday">Sáb</div>
-        {grid}
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-content">
-      <h3 class="modal-title" id="mTitle"></h3>
-      <p  class="modal-text"  id="mDate"></p>
-      <p  class="modal-text"  id="mTime"></p>
-      <p  class="modal-text"  id="mLocal"></p>
-      <p  class="modal-text"  id="mDesc" style="font-size:.9rem;color:#666;"></p>
-      <div class="modal-actions" id="mActions"></div>
-    </div>
-  </div>
-
-<script>
-  const ehSenior = {'true' if eh_senior else 'false'};
-  const overlay = document.getElementById('modalOverlay');
-  let _currentId = null;
-
-  function abrirModal(e, id, titulo, data, horario, local, descricao) {{
-    e.stopPropagation();
-    _currentId = id;
-    document.getElementById('mTitle').innerText = titulo;
-    document.getElementById('mDate').innerText  = '📅 ' + data;
-    document.getElementById('mTime').innerText  = '🕐 ' + horario;
-    document.getElementById('mLocal').innerText = '📍 ' + local;
-    document.getElementById('mDesc').innerText  = descricao || '';
-    const btns = document.getElementById('mActions');
-    if (ehSenior) {{
-      btns.innerHTML =
-        `<button class="btn-modal btn-participar" onclick="confirmarInscricao(${{id}})">✅ Quero Participar</button>
-         <button class="btn-modal btn-fechar"    onclick="fecharModal()">Voltar</button>`;
-    }} else {{
-      btns.innerHTML = `<button class="btn-modal btn-fechar" onclick="fecharModal()">Fechar</button>`;
-    }}
-    overlay.classList.add('active');
-  }}
-
-  function abrirModalVazio(e, dia) {{
-    e.stopPropagation();
-    _currentId = null;
-    document.getElementById('mTitle').innerText = 'Nenhuma atividade';
-    document.getElementById('mDate').innerText  = '📅 ' + dia;
-    document.getElementById('mTime').innerText  = 'Não há atividades neste dia.';
-    document.getElementById('mLocal').innerText = '';
-    document.getElementById('mDesc').innerText  = '';
-    document.getElementById('mActions').innerHTML =
-      `<button class="btn-modal btn-fechar" onclick="fecharModal()">Fechar</button>`;
-    overlay.classList.add('active');
-  }}
-
-  function fecharModal() {{ overlay.classList.remove('active'); }}
-  overlay.addEventListener('click', e => {{ if (e.target === overlay) fecharModal(); }});
-
-  function confirmarInscricao(id) {{
-    fecharModal();
-    var base = window.parent.location.href.split('?')[0];
-    window.parent.location.href = base + '?inscrever=' + id;
-  }}
-</script>
-</body>
-</html>"""
-
-    header_left, header_center, header_right = st.columns([1, 3, 1])
-    with header_left:
-        if st.button("◀", use_container_width=True, key="btn_mes_anterior"):
+    # 1. Navegação
+    col_left, col_center, col_right = st.columns([1, 3, 1])
+    with col_left:
+        if st.button("◀", use_container_width=True):
             if mes == 1:
                 st.session_state.mes_atual = 12
                 st.session_state.ano_atual = ano - 1
             else:
                 st.session_state.mes_atual -= 1
             st.rerun()
-
-    with header_center:
-        st.markdown(
-            f"""
-            <div style='text-align:center; font-size:1.4rem; font-weight:700; color:#3b2323; padding: 10px 0;'>
-              {nome_mes} {ano}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with header_right:
-        if st.button("▶", use_container_width=True, key="btn_mes_proximo"):
+    with col_center:
+        st.markdown(f"<div style='text-align:center; font-size:1.4rem; font-weight:700; color:#1a4263; padding:10px 0;'>{nome_mes} {ano}</div>", unsafe_allow_html=True)
+    with col_right:
+        if st.button("▶", use_container_width=True):
             if mes == 12:
                 st.session_state.mes_atual = 1
                 st.session_state.ano_atual = ano + 1
@@ -246,34 +153,73 @@ def renderizar():
                 st.session_state.mes_atual += 1
             st.rerun()
 
-    # ── Renderiza o calendário HTML ──
-    components.html(codigo_interface, height=720, scrolling=False)
+    # 2. Dados do Mês
+    atividades_por_dia = {}
+    for a in listar_atividades():
+        try:
+            d, m = a.data.split("/") 
+            if int(m) == mes:
+                atividades_por_dia.setdefault(int(d), []).append(a)
+        except:
+            pass
 
-    # ── Processa inscrição (sem query_params, via query param de inscrição) ──
-    if eh_senior and "inscricao_id" in st.session_state:
-        id_atividade = st.session_state.inscricao_id
-        resultado = inscrever_senior(usuario.id, id_atividade)
-        del st.session_state.inscricao_id
-        if resultado["sucesso"]:
-            st.success(resultado["mensagem"])
-        else:
-            st.warning(resultado["mensagem"])
-        st.rerun()
+    cal = calendar.Calendar(firstweekday=6) # 6 = Domingo
+    semanas = cal.monthdayscalendar(ano, mes)
 
-    # ── Formulário de criação (Tutor) ──
+    # 3. Cabeçalho dos dias da semana
+    dias_semana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+    cols_header = st.columns(7)
+    for i, col in enumerate(cols_header):
+        col.markdown(f"<div style='text-align:center; font-weight:700; color:#725353; font-size:0.95rem; padding-bottom:6px; border-bottom:2px solid #e9e6e7;'>{dias_semana[i]}</div>", unsafe_allow_html=True)
+    
+    st.markdown("<div style='margin-bottom:8px;'></div>", unsafe_allow_html=True)
+
+    # 4. Grade Nativa do Calendário com TAMANHO FIXO MAIOR (height=210)
+    for semana in semanas:
+        cols = st.columns(7)
+        for i, dia in enumerate(semana):
+            with cols[i]:
+                if dia != 0:
+                    # Todos os dias preenchidos terão exatos 210px de altura
+                    with st.container(height=210, border=True):
+                        st.markdown(f"<div style='text-align:right; font-weight:700; color:#333; font-size:0.85rem; margin-bottom:2px;'>{dia}</div>", unsafe_allow_html=True)
+                        
+                        lista = atividades_por_dia.get(dia, [])
+                        if lista:
+                            a = lista[0]
+                            cor = "🔵" if a.tipo() == "Remota" else "📍"
+                            
+                            st.markdown(f"""
+                            <div style='background:#f4f6f9; padding:6px; border-radius:4px; border-left:3px solid #7d4ba7; margin-bottom:4px;'>
+                                <div style='font-size:0.8rem; font-weight:bold; color:#1a4263; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>{a.titulo}</div>
+                                <div style='font-size:0.7rem; color:#555; margin-top:2px;'>{cor} {a.horario}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            if len(lista) > 1:
+                                st.markdown(f"<div style='font-size:0.65rem; color:#888; text-align:center;'>+{len(lista)-1} mais</div>", unsafe_allow_html=True)
+                            
+                            if st.button("Saiba mais", key=f"mod_{mes}_{dia}_{a.id}", use_container_width=True):
+                                modal_detalhes(a.id)
+                else:
+                    # Dias vazios TAMBÉM terão exatos 210px para garantir o alinhamento total!
+                    with st.container(height=210, border=True):
+                        st.markdown("<div style='text-align:center; color:#ccc; margin-top:50px; font-size:1.5rem;'>-</div>", unsafe_allow_html=True)
+
+    # Painel de criação de atividade (Tutor)
     if eh_tutor and st.session_state.mostra_painel_tutor:
         st.divider()
         with st.form("form_criar_atividade", clear_on_submit=True):
             st.markdown("**➕ Nova Atividade**")
             c1, c2 = st.columns(2)
             with c1:
-                titulo  = st.text_input("Título*")
-                data    = st.text_input("Data (DD/MM)*", placeholder="Ex: 15/06")
-                tipo    = st.radio("Tipo*", ["Presencial", "Remota"], horizontal=True)
+                titulo = st.text_input("Título*")
+                data = st.text_input("Data (DD/MM)*", placeholder="Ex: 15/06")
+                tipo = st.radio("Tipo*", ["Presencial", "Remota"], horizontal=True)
             with c2:
                 horario = st.text_input("Horário*", placeholder="Ex: 14:30")
-                vagas   = st.number_input("Vagas", value=30, min_value=1, max_value=200)
-                local   = st.text_input("Endereço / Link*")
+                vagas = st.number_input("Vagas", value=30, min_value=1, max_value=200)
+                local = st.text_input("Endereço / Link*")
             descricao = st.text_area("Descrição", height=60)
 
             c_salvar, c_cancelar = st.columns(2)
@@ -285,46 +231,38 @@ def renderizar():
             if cancelar:
                 st.session_state.mostra_painel_tutor = False
                 st.rerun()
-
             if salvar:
                 if not all([titulo, data, horario, local]):
-                    st.error("Preencha todos os campos obrigatórios (*)")
+                    st.error("Preencha todos os campos obrigatórios.")
                 else:
                     if tipo == "Remota":
-                        nova = AtividadeRemota(
-                            id=0, titulo=titulo, descricao=descricao, data=data,
-                            horario=horario, tutor=usuario, local=local,
-                            vagas=int(vagas), link=local
-                        )
+                        nova = AtividadeRemota(id=0, titulo=titulo, descricao=descricao, data=data,
+                                               horario=horario, tutor=usuario, local=local,
+                                               vagas=int(vagas), link=local)
                     else:
-                        nova = AtividadePresencial(
-                            id=0, titulo=titulo, descricao=descricao, data=data,
-                            horario=horario, tutor=usuario, local=local,
-                            vagas=int(vagas), endereco=local
-                        )
+                        nova = AtividadePresencial(id=0, titulo=titulo, descricao=descricao, data=data,
+                                                   horario=horario, tutor=usuario, local=local,
+                                                   vagas=int(vagas), endereco=local)
                     criar_atividade(nova)
                     st.session_state.mostra_painel_tutor = False
-                    st.success(f"Atividade '{titulo}' criada com sucesso!")
+                    st.session_state.flash_msg = f"Atividade '{titulo}' criada com sucesso!"
                     st.rerun()
 
-    # ── Formulário de inscrição (Sênior) ──
+    # Formulário de inscrição rápida (Sênior)
     if eh_senior:
         st.divider()
         todas = listar_atividades()
         if todas:
             with st.form("form_inscrever", clear_on_submit=True):
                 st.markdown("**✍️ Inscrever-se em uma atividade**")
-                escolha = st.selectbox(
-                    "Escolha a atividade:",
-                    todas,
-                    format_func=lambda a: f"{a.titulo} — {a.data} às {a.horario} ({a.local})"
-                )
+                escolha = st.selectbox("Escolha a atividade:", todas,
+                                       format_func=lambda a: f"{a.titulo} — {a.data} às {a.horario} ({a.local})")
                 if st.form_submit_button("✅ Quero Participar", use_container_width=True):
                     resultado = inscrever_senior(usuario.id, escolha.id)
                     if resultado["sucesso"]:
-                        st.success(resultado["mensagem"])
-                        st.rerun()
+                        st.session_state.flash_msg = resultado["mensagem"]
                     else:
-                        st.warning(resultado["mensagem"])
+                        st.session_state.flash_msg_error = resultado["mensagem"]
+                    st.rerun()
         else:
-            st.info("Nenhuma atividade disponível no momento.")
+            st.info("Nenhuma atividade disponível.")

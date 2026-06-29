@@ -1,4 +1,3 @@
-# services/atividade_service.py
 import streamlit as st
 import json
 import os
@@ -79,6 +78,24 @@ def carregar_todos_dados():
             ]
             _salvar_usuarios()
 
+    # Reconecta o objeto Tutor às atividades após carregar os usuários
+    if not st.session_state.get("_tutores_vinculados", False):
+        if os.path.exists(ARQUIVO_ATIVIDADES):
+            try:
+                with open(ARQUIVO_ATIVIDADES, "r", encoding="utf-8") as f:
+                    dados_ativ = json.load(f)
+                for item in dados_ativ.get("atividades", []):
+                    tutor_id = item.get("tutor_id")
+                    if tutor_id:
+                        # Busca atividade e tutor carregados na sessão
+                        a = next((ativ for ativ in st.session_state.atividades if ativ.id == item["id"]), None)
+                        t = next((u for u in st.session_state.usuarios if u.id == tutor_id), None)
+                        if a and t:
+                            a.tutor = t
+            except Exception:
+                pass
+        st.session_state._tutores_vinculados = True
+
 
 def _buscar_atividade_raw(id_atividade):
     """Busca sem chamar carregar_todos_dados (evita recursão durante o carregamento)."""
@@ -116,6 +133,11 @@ def _salvar_atividades():
         item = {"id": a.id, "titulo": a.titulo, "descricao": a.descricao,
                 "data": a.data, "horario": a.horario, "local": a.local,
                 "vagas": a.vagas, "tipo": a.tipo()}
+        
+        # SALVA O ID DO TUTOR
+        if a.tutor:
+            item["tutor_id"] = a.tutor.id
+            
         if isinstance(a, AtividadeRemota):
             item["link"] = a.link
         else:
@@ -209,6 +231,33 @@ def criar_atividade(atividade):
     _salvar_atividades()
 
 
+def deletar_atividade(atividade_id: int) -> bool:
+    """Deleta totalmente uma atividade do sistema e remove a inscrição de todos os seniores."""
+    carregar_todos_dados()
+    atividade = buscar_atividade_por_id(atividade_id)
+    if not atividade:
+        return False
+
+    # Remove da lista geral de atividades
+    st.session_state.atividades = [a for a in st.session_state.atividades if a.id != atividade_id]
+
+    # Remove a atividade da lista de inscrições de todos os seniores cadastrados
+    for u in st.session_state.usuarios:
+        if isinstance(u, Senior):
+            u.atividades_inscritas = [a for a in u.atividades_inscritas if a.id != atividade_id]
+
+    # Garante a atualização também se o usuário logado atualmente for o sênior afetado
+    if st.session_state.get("usuario_atual") and isinstance(st.session_state.usuario_atual, Senior):
+        st.session_state.usuario_atual.atividades_inscritas = [
+            a for a in st.session_state.usuario_atual.atividades_inscritas if a.id != atividade_id
+        ]
+
+    # Persiste as alterações nos arquivos correspondentes
+    _salvar_atividades()
+    _salvar_usuarios()
+    return True
+
+
 def inscrever_senior(senior_id: int, atividade_id: int) -> dict:
     """Inscreve um sênior em uma atividade com verificação dupla de duplicidade."""
     carregar_todos_dados()
@@ -241,7 +290,7 @@ def inscrever_senior(senior_id: int, atividade_id: int) -> dict:
     if st.session_state.get("usuario_atual") and st.session_state.usuario_atual.id == senior_id:
         st.session_state.usuario_atual = senior
 
-    # Persiste — SEM chamar carregar_todos_dados() depois (isso desfaria a inscrição em memória)
+    # Persiste
     _salvar_atividades()
     _salvar_usuarios()
 

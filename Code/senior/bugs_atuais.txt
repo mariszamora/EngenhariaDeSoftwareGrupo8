@@ -1,9 +1,16 @@
 checklist de coisas a fazer:
-    colocar pra mudar o perfil entre sênior e tutor
-    página de avisos
-    colocar trocar por Tutor nao definido para o tutor que colocou a atividade
-✓   botão de cancelar atividade 
-    bug visual na pagina de atividades
-    modal para confirmar cancelamento da atividade
-    mensagem que confirma inscrição
-    modal bugado no calendario
+✓    colocar pra mudar o perfil entre sênior e tutor
+✓    página de avisos
+✓    calendario cortado embaixo no tutor
+✓    modal para confirmar cancelamento da atividade
+✓    botão de cancelar atividade
+✓    tutor adicionar aviso no mural
+✓    bug visual na navbar
+✓    bug visual na pagina de atividades
+✓    bug visual no botao de sair
+✓    bug visual no botao de sair    colocar trocar por Tutor nao definido para o tutor que colocou a atividade
+✓    mensagem que confirma inscrição
+✓    modal bugado no calendario
+✓    tutor deletar atividade por meio do modal do calendario
+    bug visual no calendario
+    tentar deixar visualmente mais proximo do figma
