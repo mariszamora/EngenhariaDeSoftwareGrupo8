@@ -1,0 +1,16 @@
+senior/
+├── app.py                          #  PONTO DE ENTRADA PRINCIPAL
+├── repositorios/                           # PASTA DE DADOS (CRIADA AUTOMATICAMENTE) n funciona
+│   ├── atividades.json             #  ARQUIVO DE PERSISTÊNCIA DAS ATIVIDADES
+│   └── usuarios.json               #  ARQUIVO DE PERSISTÊNCIA DOS USUÁRIOS
+├── models/                         #  MODELOS (ENTIDADES DO SISTEMA)
+│   ├── usuario.py                  #  DEFINE USUARIO, SENIOR E TUTOR
+│   └── atividade.py                #  DEFINE ATIVIDADE, PRESENCIAL E REMOTA
+├── services/                       #  SERVIÇOS (LÓGICA DE NEGÓCIO)
+│   └── atividade_service.py        #  TODO O CÓDIGO PRINCIPAL FICA AQUI!
+└── pages/                          #  PÁGINAS (INTERFACES DO USUÁRIO)
+    ├── calendario.py               #  TELA DO CALENDÁRIO
+    └── pageatividades.py           #  TELA DE ATIVIDADES DO SÊNIOR
+
+
+so dar python -m streamlit run app.py

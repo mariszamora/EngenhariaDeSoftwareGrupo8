@@ -1,0 +1,61 @@
+{
+  "proximo_id": 7,
+  "atividades": [
+    {
+      "id": 1,
+      "titulo": "Roda de Conversa",
+      "descricao": "Conversa entre participantes.",
+      "data": "01/06",
+      "horario": "13:30",
+      "local": "Sala Virtual",
+      "vagas": 30,
+      "tipo": "Remota",
+      "link": "https://meet.google.com/"
+    },
+    {
+      "id": 3,
+      "titulo": "Yoga",
+      "descricao": "Alongamento e relaxamento.",
+      "data": "08/06",
+      "horario": "08:00",
+      "local": "Google Meet",
+      "vagas": 40,
+      "tipo": "Remota",
+      "link": "https://meet.google.com/"
+    },
+    {
+      "id": 4,
+      "titulo": "Teste",
+      "descricao": "",
+      "data": "30/06",
+      "horario": "11:30",
+      "local": "Googe meet",
+      "vagas": 30,
+      "tipo": "Remota",
+      "link": "Googe meet"
+    },
+    {
+      "id": 5,
+      "titulo": "teste2",
+      "descricao": "",
+      "data": "02/06",
+      "horario": "10:20",
+      "local": "meet",
+      "vagas": 30,
+      "tipo": "Remota",
+      "link": "meet"
+    },
+    {
+      "id": 6,
+      "titulo": "testeaaaaa",
+      "descricao": "",
+      "data": "07/06",
+      "horario": "11:11",
+      "local": "meet",
+      "vagas": 30,
+      "tipo": "Remota",
+      "tutor_id": 2,
+      "link": "meet"
+    }
+  ]
+}
