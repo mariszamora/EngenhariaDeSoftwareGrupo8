@@ -25,6 +25,36 @@ st.markdown(
     #MainMenu,
     footer { display: none !important; }
 
+    /* ===== AUMENTO GLOBAL DE FONTE ===== */
+    html, body,
+    [data-testid="stApp"],
+    [class*="st-"],
+    [class*="css-"] {
+        font-size: 20px !important;
+    }
+
+    /* Títulos escalados proporcionalmente ao novo tamanho base */
+    h1 { font-size: 2.4rem !important; }
+    h2 { font-size: 2.0rem !important; }
+    h3 { font-size: 1.7rem !important; }
+    h4 { font-size: 1.4rem !important; }
+
+    /* Texto corrido, labels e legendas */
+    p, label, span, div,
+    .stMarkdown, .stCaption,
+    [data-testid="stMarkdownContainer"] {
+        font-size: 1.05rem !important;
+    }
+
+    /* Inputs de formulário (texto, número, data, select) */
+    input, textarea, select,
+    [data-testid="stTextInput"] input,
+    [data-testid="stNumberInput"] input,
+    [data-testid="stSelectbox"] div {
+        font-size: 1.05rem !important;
+    }
+    /* ===================================== */
+
     html, body,
     [data-testid="stApp"],
     [data-testid="stAppViewContainer"],
@@ -52,7 +82,7 @@ st.markdown(
     }
     .profile-name {
         font-weight: 700;
-        font-size: 0.9rem;
+        font-size: 1.05rem;
         color: #1a4263;
         text-align: center;
     }
@@ -62,7 +92,7 @@ st.markdown(
         border: none;
         border-radius: 999px;
         padding: 4px 16px;
-        font-size: 0.75rem;
+        font-size: 0.95rem;
         font-weight: 700;
         cursor: pointer;
         width: 100%;
@@ -71,16 +101,17 @@ st.markdown(
     .profile-sair:hover {
         background: #c0392b;
     }
-    /* Botões da navbar */
+    /* Botões da navbar — aumentados para acompanhar a fonte maior */
     .stButton > button {
         border-radius: 999px !important;
-        padding: 10px 16px !important;
+        padding: 12px 20px !important;
         color: #1a4263 !important;
         background-color: #ffffff !important;
         border: 1px solid #1a4263 !important;
         box-shadow: 0 6px 15px rgba(26,66,99,0.12) !important;
         font-weight: 700 !important;
-        min-height: 44px !important;
+        font-size: 1.05rem !important;
+        min-height: 52px !important;
         transition: background-color 0.16s ease, transform 0.12s ease !important;
     }
     .stButton > button:hover {
@@ -162,7 +193,7 @@ with col1:
     st.markdown(
         """
     <div style="text-align: center; padding: 8px 0;">
-        <span style="font-size: 1.1rem; font-weight: 900; background: linear-gradient(45deg, #f39c12, #9b59b6); 
+        <span style="font-size: 1.3rem; font-weight: 900; background: linear-gradient(45deg, #f39c12, #9b59b6); 
                      -webkit-background-clip: text; -webkit-text-fill-color: transparent;">65+</span>
     </div>
     """,
@@ -197,7 +228,6 @@ with col_tutor:
             st.session_state.mostra_painel_tutor = (
                 not st.session_state.mostra_painel_tutor
             )
-            st.session_state.pagina = "Calendario"
             st.rerun()
 
 with col_aviso:
@@ -206,7 +236,6 @@ with col_aviso:
             st.session_state.mostra_painel_aviso = (
                 not st.session_state.mostra_painel_aviso
             )
-            st.session_state.pagina = "Mural"
             st.rerun()
 
 with col_profile:
